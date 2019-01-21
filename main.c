@@ -7,20 +7,21 @@
 
 int main(void) {
   char* input = getInput();
+  fprintf(stdout, "Got:\n %s\n", input);
 
   cJSON *parsedJson = cJSON_Parse(input);
 
   if (parsedJson == NULL) {
     const char *e_ptr = cJSON_GetErrorPtr();
     if(e_ptr != NULL) {
-      fprintf(stderr, "Error: %s\n", e_ptr);
+      fprintf(stderr, "JSON parse error: %s\n", e_ptr);
     }
     free(input);
     return 1;
   } else {
     /* Do some stuff */
     if (!cJSON_IsArray(parsedJson)){
-      perror("Expected array, got not that!\n");
+      fprintf(stderr,"Expected array, got %#x!\n", parsedJson->type);
       return 1;
     }
 
@@ -32,8 +33,8 @@ int main(void) {
     }
     /* Deallocate everything */
     for (int i=0; i < numPkgs; i++) {
-      printf("{name: %s, size: %d}\n", availablePkgs[i]->name, availablePkgs[i]->size);
       if(availablePkgs[i] != NULL) {
+        printf("%d name: %s, size: %d\n",i, availablePkgs[i]->name, availablePkgs[i]->size);
         free(availablePkgs[i]);
       }
     }
@@ -61,7 +62,7 @@ package* packageFromJson(cJSON* jsonPkg){
   cJSON* size = cJSON_GetObjectItemCaseSensitive(jsonPkg, "size");
 
   if (!cJSON_IsNumber(size) || !cJSON_IsString(name)) {
-    fprintf(stderr, "Malformed package information");
+    fprintf(stderr, "Malformed package information\n");
     return NULL;
   }
 

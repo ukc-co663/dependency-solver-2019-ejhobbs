@@ -46,7 +46,7 @@ int main(void) {
 
 char* getInput(void) {
   char* input = NULL;
-  char line[4096];
+  char line[1024];
   int size = 0;
   while (scanf("%s[^\n]", line) != EOF) {
     int lineSize = strlen(line);

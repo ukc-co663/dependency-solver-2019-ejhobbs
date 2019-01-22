@@ -54,13 +54,17 @@ char* getInput(char* filename) {
 
   FILE* fp = fopen(filename, "r");
 
-  while (fscanf(fp, "%s[^\n]", line) != EOF) {
-    int lineSize = strlen(line);
-    input = realloc(input, size + lineSize + 1);
-    memcpy(input + size, line, lineSize);
-    size += lineSize;
+  if (fp != NULL) {
+    while (fscanf(fp, "%s[^\n]", line) != EOF) {
+      int lineSize = strlen(line);
+      input = realloc(input, size + lineSize + 1);
+      memcpy(input + size, line, lineSize);
+      size += lineSize;
+    }
+    return input;
   }
-  return input;
+  perror("Failed to open file");
+  return NULL;
 }
 
 package* packageFromJson(cJSON* jsonPkg){

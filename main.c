@@ -5,9 +5,12 @@
 
 #include "main.h"
 
-int main(void) {
-  char* input = getInput();
-  fprintf(stdout, "Got:\n %s\n", input);
+int main(int argc, char** argv) {
+  if (argc < _numargs) {
+    fprintf(stderr, "Invalid number of arguments: %d \n\nUsage: \n solve repo initialState commands", argc-1);
+    return 1;
+  }
+  char* input = getInput(argv[_repo]);
 
   cJSON *parsedJson = cJSON_Parse(input);
 
@@ -44,11 +47,14 @@ int main(void) {
   return 0;
 }
 
-char* getInput(void) {
+char* getInput(char* filename) {
   char* input = NULL;
   char line[1024];
   int size = 0;
-  while (scanf("%s[^\n]", line) != EOF) {
+
+  FILE* fp = fopen(filename, "r");
+
+  while (fscanf(fp, "%s[^\n]", line) != EOF) {
     int lineSize = strlen(line);
     input = realloc(input, size + lineSize + 1);
     memcpy(input + size, line, lineSize);

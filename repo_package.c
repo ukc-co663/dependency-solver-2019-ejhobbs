@@ -1,4 +1,4 @@
-#include "package.h"
+#include "repo_package.h"
 
 package* package_fromJson(cJSON* jsonPkg){
   cJSON* name = cJSON_GetObjectItemCaseSensitive(jsonPkg, "name");

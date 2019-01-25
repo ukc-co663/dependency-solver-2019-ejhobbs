@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <cJSON.h>
 
-#include "package.h"
+#include "repo_package.h"
 #include "main.h"
 
 int main(int argc, char** argv) {

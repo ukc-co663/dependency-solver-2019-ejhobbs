@@ -5,8 +5,8 @@ dependencies:
 	apt-get update
 	apt-get install -y cmake ninja
 
-cmake: dependencies
-	cmake . -GNinja
+cmake:
+	cmake .
 
 compile: cmake
 	ninja

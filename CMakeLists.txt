@@ -20,11 +20,9 @@ add_executable(${PROJECT_NAME}
   main.c
 )
 
-target_link_libraries(${PROJECT_NAME}
-  cJSON
-)
+target_link_libraries(${PROJECT_NAME} package)
 
-add_library(cJSON
+add_library(cJSON SHARED
   lib/cJSON/cJSON.h
   lib/cJSON/cJSON.c
 )
@@ -34,3 +32,9 @@ target_include_directories(cJSON
   lib/cJSON
 )
 
+add_library(package
+  package.c
+  package.h
+)
+
+target_link_libraries(package cJSON)

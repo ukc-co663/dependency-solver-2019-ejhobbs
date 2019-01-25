@@ -124,6 +124,19 @@ solve/fast:
 .PHONY : solve/fast
 
 #=============================================================================
+# Target rules for targets named package
+
+# Build rule for target.
+package: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 package
+.PHONY : package
+
+# fast build rule for target.
+package/fast:
+	$(MAKE) -f CMakeFiles/package.dir/build.make CMakeFiles/package.dir/build
+.PHONY : package/fast
+
+#=============================================================================
 # Target rules for targets named cJSON
 
 # Build rule for target.
@@ -190,6 +203,33 @@ main.c.s:
 	$(MAKE) -f CMakeFiles/solve.dir/build.make CMakeFiles/solve.dir/main.c.s
 .PHONY : main.c.s
 
+package.o: package.c.o
+
+.PHONY : package.o
+
+# target to build an object file
+package.c.o:
+	$(MAKE) -f CMakeFiles/package.dir/build.make CMakeFiles/package.dir/package.c.o
+.PHONY : package.c.o
+
+package.i: package.c.i
+
+.PHONY : package.i
+
+# target to preprocess a source file
+package.c.i:
+	$(MAKE) -f CMakeFiles/package.dir/build.make CMakeFiles/package.dir/package.c.i
+.PHONY : package.c.i
+
+package.s: package.c.s
+
+.PHONY : package.s
+
+# target to generate assembly for a file
+package.c.s:
+	$(MAKE) -f CMakeFiles/package.dir/build.make CMakeFiles/package.dir/package.c.s
+.PHONY : package.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -199,6 +239,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... solve"
+	@echo "... package"
 	@echo "... cJSON"
 	@echo "... lib/cJSON/cJSON.o"
 	@echo "... lib/cJSON/cJSON.i"
@@ -206,6 +247,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... package.o"
+	@echo "... package.i"
+	@echo "... package.s"
 .PHONY : help
 
 

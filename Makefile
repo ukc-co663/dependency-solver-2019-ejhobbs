@@ -1,6 +1,7 @@
-.phony all: compile
+.PHONY: all
+all: compile
 
-.phony dependencies:
+dependencies:
 	apt-get update
 	apt-get install -y cmake ninja
 

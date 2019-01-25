@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.0)
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_C++_COMPILER g++)
 

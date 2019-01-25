@@ -1,5 +1,5 @@
 build
-lib
+clib
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake

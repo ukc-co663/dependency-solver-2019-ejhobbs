@@ -3,10 +3,10 @@ all: compile
 
 dependencies:
 	apt-get update
-	apt-get install -y cmake ninja
+	apt-get install -y cmake ninja-build
 
-cmake:
-	cmake .
+cmake: dependencies
+	cmake -GNinja .
 
 compile: cmake
 	ninja

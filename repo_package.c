@@ -54,7 +54,7 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
 
 relation* getAllRelations(const cJSON* relationList, int count) {
   relation* relations = calloc(count, sizeof(relation));
-  const cJSON* rel = NULL;
+  cJSON* rel = NULL;
   int i = 0;
   cJSON_ArrayForEach(rel, relationList) {
     relations[i] = parseRelation(rel->valuestring);
@@ -132,8 +132,8 @@ void package_free(package* p) {
   if (p->cDepends > 0 && p->depends != NULL) {
     for(int i = 0; i < p->cDepends; i++) {
       relation_free(p->cDepends, p->depends[i]);
-      free(p->depends);
     }
+    free(p->depends);
   }
   if (p->cConflicts > 0 && p->conflicts != NULL) relation_free(p->cConflicts, p->conflicts);
   version_free(&(p->version));

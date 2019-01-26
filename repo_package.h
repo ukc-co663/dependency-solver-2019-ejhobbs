@@ -11,7 +11,7 @@
 
 
 typedef struct version {
-  int parts;
+  int size;
   int* val;
 } version;
 
@@ -33,10 +33,12 @@ typedef struct package {
 
 package* package_fromJson(const cJSON*);
 version* versionFromString(char*);
+void getAllDependencies(package*, const cJSON*);
 relation** getAllRelations(const cJSON*, int);
 relation* parseRelation(char*);
 void package_prettyPrint(const package*);
 void relation_free(int, relation**);
+void version_free(version*);
 void package_free(package*);
 void version_prettyPrint(const version*);
 void relations_prettyPrint(int, const relation**);

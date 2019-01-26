@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     /* Deallocate everything */
     for (int i=0; i < numPkgs; i++) {
       if(availablePkgs[i] != NULL) {
-        package_prettyPrint(availablePkgs[i]);
+//        package_prettyPrint(availablePkgs[i]);
         package_free(availablePkgs[i]);
       }
     }
@@ -60,19 +60,16 @@ void end(char* input, cJSON* json, int status) {
 }
 
 char* getInput(const char* filename) {
-  char* input = NULL;
-  char line[1024];
-  int size = 0;
-
   FILE* fp = fopen(filename, "r");
 
   if (fp != NULL) {
-    while (fscanf(fp, "%s[^\n]", line) != EOF) {
-      int lineSize = strlen(line);
-      input = realloc(input, size + lineSize + 1);
-      memcpy(input + size, line, lineSize);
-      size += lineSize;
-    }
+    fseek(fp, 0, SEEK_END);
+    long len = ftell(fp); /* find end */
+    rewind(fp);
+    char* input = malloc((len+1)*sizeof(char));
+    fread(input, sizeof(char), len, fp);
+    input[len] = 0; /* null terminate */
+    fclose(fp);
     return input;
   }
   perror("Failed to open file");

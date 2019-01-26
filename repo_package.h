@@ -14,23 +14,25 @@
 #define _eq 4
 
 
-typedef struct dependency {
+typedef struct relation {
   char* name;
   int* version;
   int comp;
-} dependency;
+} relation;
 
 typedef struct package {
   char* name;
   int size;
   int* version;
   int cDepends;
-  dependency** depends;
+  relation** depends;
+  int cConflicts;
+  relation** conflicts;
 } package;
 
 package* package_fromJson(const cJSON*);
 int* versionFromString(char*);
-dependency** getAllDependencies(const cJSON*, int);
-dependency* getDependency(char*);
+relation** getAllRelations(const cJSON*, int);
+relation* parseRelation(char*);
 void package_prettyPrint(const package*);
 void package_free(package*);

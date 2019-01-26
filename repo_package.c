@@ -5,51 +5,57 @@ package* package_fromJson(const cJSON* jsonPkg){
   cJSON* size = cJSON_GetObjectItemCaseSensitive(jsonPkg, "size");
   cJSON* version = cJSON_GetObjectItemCaseSensitive(jsonPkg, "version");
   cJSON* depends = cJSON_GetObjectItemCaseSensitive(jsonPkg, "depends");
+  cJSON* conflicts = cJSON_GetObjectItemCaseSensitive(jsonPkg, "conflicts");
 
   /* Check everything's in order */
   if (!cJSON_IsNumber(size) || !cJSON_IsString(name) ||
-      !cJSON_IsString(version) || !cJSON_IsArray(depends)) {
+      !cJSON_IsString(version) || !cJSON_IsArray(depends) ||
+      !cJSON_IsArray(conflicts)) {
     fprintf(stderr, "Malformed package information\n");
     return NULL;
   }
+
   int numDepends = cJSON_GetArraySize(depends);
+  int numConflicts = cJSON_GetArraySize(conflicts);
 
   package* parsed = malloc(sizeof *parsed);
   parsed->name = name->valuestring;
   parsed->size = size->valueint;
   parsed->version = versionFromString(version->valuestring);
   parsed->cDepends = numDepends;
-  parsed->depends = getAllDependencies(depends, numDepends);
+  parsed->depends = getAllRelations(depends, numDepends);
+  parsed->cConflicts = numConflicts;
+  parsed->conflicts = getAllRelations(conflicts, numConflicts);
   return parsed;
 }
 
-dependency** getAllDependencies(const cJSON* depList, int count) {
-  dependency** dependencies = calloc(count, sizeof(dependency*));
-  dependency** thisDep = dependencies;
-  const cJSON* dep = NULL;
-  cJSON_ArrayForEach(dep, depList) {
-    *thisDep = getDependency(dep->valuestring);
-    thisDep++;
+relation** getAllRelations(const cJSON* relationList, int count) {
+  relation** relations = calloc(count, sizeof(relation*));
+  relation** thisRelation = relations;
+  const cJSON* rel = NULL;
+  cJSON_ArrayForEach(rel, relationList) {
+    *thisRelation = parseRelation(rel->valuestring);
+    thisRelation++;
   }
-  return dependencies;
+  return relations;
 }
 
-dependency* getDependency(char* dep) {
-  dependency* newDep = calloc(1, sizeof(dependency));
+relation* parseRelation(char* rel) {
+  relation* newRel = calloc(1, sizeof(relation));
   int sName = 0; /* Size of pkg name */
-  int relation = 0; /* Start with any */
-  char* curChar = dep;
+  int comp = 0; /* Start with any */
+  char* curChar = rel;
   /* Loop over the string until we get to the first number, ie the version starts */
-  while(curChar < dep + strlen(dep) && (*curChar > 0x39 || *curChar < 0x30)){
+  while(curChar < rel + strlen(rel) && (*curChar > 0x39 || *curChar < 0x30)){
     switch(*curChar) {
       case '<':
-        relation |= _lt;
+        comp |= _lt;
         break;
       case '>':
-        relation |= _gt;
+        comp |= _gt;
         break;
       case '=':
-        relation |= _eq;
+        comp |= _eq;
         break;
       default:
         sName++;
@@ -58,13 +64,13 @@ dependency* getDependency(char* dep) {
     curChar++;
   }
   char* name = calloc(sName+1, sizeof(char));
-  strncpy(name, dep, sName);
+  strncpy(name, rel, sName);
   name[sName] = 0;
 
-  newDep->name = name;
-  newDep->version = versionFromString(curChar);
-  newDep->comp = relation;
-  return newDep;
+  newRel->name = name;
+  newRel->version = versionFromString(curChar);
+  newRel->comp = comp;
+  return newRel;
 }
 
 
@@ -87,6 +93,10 @@ void package_free(package* p) {
     free(p->depends[i]->name);
     free(p->depends[i]);
   }
+  for (int i = 0; i < p->cConflicts; i++) {
+    free(p->conflicts[i]->name);
+    free(p->conflicts[i]);
+  }
   free(p->depends);
   free(p);
 }
@@ -101,6 +111,14 @@ void package_prettyPrint(const package* p) {
         , p->depends[i]->version[MAJOR]
         , p->depends[i]->version[MINOR]
         , p->depends[i]->version[PATCH]);
+  }
+  printf("Conflicts:\n");
+  for (int i=0; i < p->cConflicts; i++) {
+    printf("\t %s ", p->conflicts[i]->name);
+    printf(": %d.%d.%d\n"
+        , p->conflicts[i]->version[MAJOR]
+        , p->conflicts[i]->version[MINOR]
+        , p->conflicts[i]->version[PATCH]);
   }
   printf("Version: %d.%d.%d\n", p->version[MAJOR], p->version[MINOR], p->version[PATCH]);
 }

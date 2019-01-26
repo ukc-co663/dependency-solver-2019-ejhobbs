@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     /* Deallocate everything */
     for (int i=0; i < numPkgs; i++) {
       if(availablePkgs[i] != NULL) {
-//        package_prettyPrint(availablePkgs[i]);
+        package_prettyPrint(availablePkgs[i]);
         package_free(availablePkgs[i]);
       }
     }

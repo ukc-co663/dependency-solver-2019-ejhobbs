@@ -7,25 +7,41 @@ package* package_fromJson(const cJSON* jsonPkg){
   cJSON* depends = cJSON_GetObjectItemCaseSensitive(jsonPkg, "depends");
   cJSON* conflicts = cJSON_GetObjectItemCaseSensitive(jsonPkg, "conflicts");
 
+
   /* Check everything's in order */
   if (!cJSON_IsNumber(size) || !cJSON_IsString(name) ||
-      !cJSON_IsString(version) || !cJSON_IsArray(depends) ||
-      !cJSON_IsArray(conflicts)) {
+      !cJSON_IsString(version)) {
     fprintf(stderr, "Malformed package information\n");
     return NULL;
   }
-
-  int numDepends = cJSON_GetArraySize(depends);
-  int numConflicts = cJSON_GetArraySize(conflicts);
-
   package* parsed = malloc(sizeof *parsed);
   parsed->name = name->valuestring;
   parsed->size = size->valueint;
   parsed->version = versionFromString(version->valuestring);
-  parsed->cDepends = numDepends;
-  parsed->depends = getAllRelations(depends, numDepends);
-  parsed->cConflicts = numConflicts;
-  parsed->conflicts = getAllRelations(conflicts, numConflicts);
+
+  if (depends != NULL && cJSON_IsArray(depends)) {
+    /* Depends is a list of lists for no apparent reason */
+    int numDepends = 0;
+    relation** relations = NULL;
+    cJSON* thisItem = NULL;
+    cJSON_ArrayForEach(thisItem, depends) {
+      int thisSize = cJSON_GetArraySize(thisItem);
+      relation** theseRelations = getAllRelations(thisItem, thisSize);
+
+      relations = realloc(relations, (numDepends+thisSize)*sizeof(relation*));
+      memcpy(relations + numDepends, theseRelations, thisSize*sizeof(relation*));
+
+      numDepends += thisSize;
+    }
+    parsed->cDepends = numDepends;
+    parsed->depends = relations;
+  }
+  if (conflicts != NULL && cJSON_IsArray(conflicts)) {
+    int numConflicts = cJSON_GetArraySize(conflicts);
+    parsed->cConflicts = numConflicts;
+    parsed->conflicts = getAllRelations(conflicts, numConflicts);
+  }
+
   return parsed;
 }
 
@@ -74,51 +90,76 @@ relation* parseRelation(char* rel) {
 }
 
 
-int* versionFromString(char* versionString) {
-  int* v = calloc(_numversions, sizeof(int));
+version* versionFromString(char* versionString) {
+  version* vers = calloc(1, sizeof(version));
+  int* v = NULL;
+  int vSize = 0;
   char delim[] = ".";
   char* part = strtok(versionString, delim);
-  int* thisVersion = v;
-  while (part != NULL && thisVersion < v+_numversions ) {
-    *thisVersion = atoi(part);
-    thisVersion++;
+  while (part != NULL) {
+    v = realloc(v, vSize++);
+    v[vSize-1] = atoi(part);
     part = strtok(NULL, delim);
   }
-  return v;
+  vers->parts = vSize;
+  vers->val = v;
+  return vers;
+}
+
+void relation_free(int s, relation** r) {
+  for (int i = 0; i < s; i++) {
+    free(r[i]->name);
+    free(r[i]->version->val);
+    free(r[i]->version);
+    free(r[i]);
+  }
+  free(r);
 }
 
 void package_free(package* p) {
+  relation_free(p->cDepends, p->depends);
+  relation_free(p->cConflicts, p->conflicts);
+  free(p->version->val);
   free(p->version);
-  for (int i = 0; i < p->cDepends; i++) {
-    free(p->depends[i]->name);
-    free(p->depends[i]);
-  }
-  for (int i = 0; i < p->cConflicts; i++) {
-    free(p->conflicts[i]->name);
-    free(p->conflicts[i]);
-  }
-  free(p->depends);
   free(p);
 }
 
 void package_prettyPrint(const package* p) {
   printf("\n--[ %s ]--\n", p->name);
   printf("Size: %d\n", p->size);
-  printf("Depends:\n");
-  for (int i=0; i < p->cDepends; i++) {
-    printf("\t %s ", p->depends[i]->name);
-    printf(": %d.%d.%d\n"
-        , p->depends[i]->version[MAJOR]
-        , p->depends[i]->version[MINOR]
-        , p->depends[i]->version[PATCH]);
+  printf("Version: ");
+  version_prettyPrint(p->version);
+  printf("\n");
+  if(p->depends != NULL) {
+    printf("Depends:\n");
+    relations_prettyPrint(p->cDepends, (const relation**) p->depends);
   }
-  printf("Conflicts:\n");
-  for (int i=0; i < p->cConflicts; i++) {
-    printf("\t %s ", p->conflicts[i]->name);
-    printf(": %d.%d.%d\n"
-        , p->conflicts[i]->version[MAJOR]
-        , p->conflicts[i]->version[MINOR]
-        , p->conflicts[i]->version[PATCH]);
+  if(p->conflicts != NULL) {
+    printf("Conflicts:\n");
+    relations_prettyPrint(p->cConflicts, (const relation**) p->conflicts);
   }
-  printf("Version: %d.%d.%d\n", p->version[MAJOR], p->version[MINOR], p->version[PATCH]);
+}
+
+void version_prettyPrint(const version* v){
+  if (v->parts > 0) {
+    printf("%d", v->val[0]);
+    for (int i=1; i < v->parts; i++) {
+      printf(".%d", v->val[i]);
+    }
+  }
+}
+
+void relations_prettyPrint(int s, const relation** rs) {
+  for (int i=0; i < s; i++) {
+    printf("\t %s", rs[i]->name);
+    comp_prettyPrint(&(rs[i]->comp));
+    version_prettyPrint(rs[i]->version);
+    printf("\n");
+  }
+}
+
+void comp_prettyPrint(const int* comp){
+  if(*comp & _gt) printf(">");
+  if(*comp & _lt) printf("<");
+  if(*comp & _eq) printf("=");
 }

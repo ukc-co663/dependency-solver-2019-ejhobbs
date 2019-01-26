@@ -20,22 +20,25 @@ int main(int argc, char** argv) {
     if(e_ptr != NULL) {
       fprintf(stderr, "JSON parse error: %s\n", e_ptr);
     }
-    free(input);
-    exit(1);
+    end(input, parsedJson, 1);
   } else {
     /* Do some stuff */
     if (!cJSON_IsArray(parsedJson)){
       fprintf(stderr,"Expected array, got %#x!\n", parsedJson->type);
-      exit(1);
+      end(input, parsedJson, 1);
     }
 
     int numPkgs = cJSON_GetArraySize(parsedJson);
     package** availablePkgs = malloc(numPkgs * sizeof *availablePkgs);
 
     /* Go from Json layout to array of struct*s */
-    for (int i=0; i < numPkgs; i++) {
-      availablePkgs[i] = package_fromJson(cJSON_GetArrayItem(parsedJson, i));
+    package** curPackage = availablePkgs;
+    const cJSON *pkg = NULL;
+    cJSON_ArrayForEach(pkg, parsedJson) {
+      *curPackage = package_fromJson(pkg);
+      curPackage++;
     }
+
     /* Deallocate everything */
     for (int i=0; i < numPkgs; i++) {
       if(availablePkgs[i] != NULL) {
@@ -46,10 +49,17 @@ int main(int argc, char** argv) {
     free(availablePkgs);
   }
   free(input);
+  cJSON_Delete(parsedJson);
   return 0;
 }
 
-char* getInput(char* filename) {
+void end(char* input, cJSON* json, int status) {
+  free(input);
+  cJSON_Delete(json);
+  exit(status);
+}
+
+char* getInput(const char* filename) {
   char* input = NULL;
   char line[1024];
   int size = 0;

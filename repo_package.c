@@ -18,34 +18,31 @@ package* package_fromJson(const cJSON* jsonPkg){
   parsed->size = size->valueint;
   parsed->version = versionFromString(version->valuestring);
 
-  int numDepends = 0;
   int numConflicts = 0;
 
   if (depends != NULL && cJSON_IsArray(depends)) {
-    //Depends is a list of lists for no apparent reason
     getAllDependencies(parsed, depends);
   }
   if (conflicts != NULL && cJSON_IsArray(conflicts)) {
     numConflicts = cJSON_GetArraySize(conflicts);
     parsed->conflicts = getAllRelations(conflicts, numConflicts);
+    parsed->cConflicts = numConflicts;
   }
-
-  parsed->cDepends = numDepends;
-  parsed->cConflicts = numConflicts;
 
   return parsed;
 }
 
 void getAllDependencies(package* pkg, const cJSON* deps) {
   int numGroups = cJSON_GetArraySize(deps);
-  relation** groups = calloc((size_t) numGroups, sizeof(relation*));
+  relation_group* groups = calloc((size_t) numGroups, sizeof(relation_group));
   cJSON* thisItem = NULL;
   int curGroup = 0;
   cJSON_ArrayForEach(thisItem, deps) {
     int thisSize = cJSON_GetArraySize(thisItem);
     relation* theseRelations = getAllRelations(thisItem, thisSize);
 
-    groups[curGroup] = theseRelations;
+    relation_group grp = {thisSize, theseRelations};
+    groups[curGroup] = grp;
     curGroup++;
   }
   pkg->cDepends = numGroups;
@@ -66,30 +63,53 @@ relation* getAllRelations(const cJSON* relationList, int count) {
 relation parseRelation(char* rel) {
   int sName = 0; /* Size of pkg name */
   int comp = 0; /* Start with any */
+  int sym = 0;
   char* curChar = rel;
-  /* Loop over the string until we get to the first number, ie the version starts */
-  while(curChar < rel + strlen(rel) && (*curChar > 0x39 || *curChar < 0x30)){
+  /* Loop over the string until we get to the first symbol, ie end of the name*/
+  while(sName < strlen(rel) && !sym){
     switch(*curChar) {
       case '<':
-        comp |= _lt;
-        break;
       case '>':
-        comp |= _gt;
-        break;
       case '=':
-        comp |= _eq;
+        sym = 1;
         break;
       default:
         sName++;
         break;
     }
-    curChar++;
+    if(!sym){
+        curChar++;
+    }
   }
   char* name = calloc((size_t) sName+1, sizeof(char));
   strncpy(name, rel, sName);
   name[sName] = 0;
+  int num = 0;
+  while(curChar < rel + strlen(rel) && !num) {
+      switch(*curChar) {
+          case '<':
+              comp |= _lt;
+              break;
+          case '>':
+              comp |= _gt;
+              break;
+          case '=':
+              comp |= _eq;
+              break;
+          default:
+              num=1;
+              break;
+      }
+      if (!num) {
+          curChar++;
+      }
+  }
+  version ver = {0, NULL};
+  if(num) {
+      ver = versionFromString(curChar);
+  }
 
-  relation newRel = {name, versionFromString(curChar), comp};
+  relation newRel = {name, ver, comp};
   return newRel;
 }
 
@@ -99,16 +119,22 @@ version versionFromString(char* versionString) {
   int vSize = 0;
   char delim[] = ".";
   char* part = strtok(versionString, delim);
-  while (part != NULL) {
-    int* tmp = realloc(parts, (vSize+1)*sizeof(int));
-    if(tmp != NULL) {
-      parts = tmp;
-      parts[vSize] = atoi(part);
-      part = strtok(NULL, delim);
-      vSize++;
-    } else {
-      perror("Something went wrong");
-    }
+  if(part == NULL) {
+      parts = malloc(sizeof(int));
+      vSize = 1;
+      *parts = atoi(versionString);
+  } else {
+      while (part != NULL) {
+          int* tmp = realloc(parts, (vSize+1)*sizeof(int));
+          if(tmp != NULL) {
+              parts = tmp;
+              parts[vSize] = atoi(part);
+              part = strtok(NULL, delim);
+              vSize++;
+          } else {
+              perror("Something went wrong");
+          }
+      }
   }
   version vers = {vSize, parts};
   return vers;
@@ -131,7 +157,7 @@ void version_free(version* v) {
 void package_free(package* p) {
   if (p->cDepends > 0 && p->depends != NULL) {
     for(int i = 0; i < p->cDepends; i++) {
-      relation_free(p->cDepends, p->depends[i]);
+      relation_free(p->depends[i].size, p->depends[i].relations);
     }
     free(p->depends);
   }
@@ -149,7 +175,7 @@ void package_prettyPrint(const package* p) {
   if(p->cDepends > 0 && p->depends != NULL) {
     printf("Depends:\n");
     for(int i = 0; i < p->cDepends; i++) {
-      relations_prettyPrint(p->cDepends, (const relation*) p->depends[i]);
+      relations_prettyPrint(p->depends[i].size, (const relation*) p->depends[i].relations);
     }
   }
   if(p->cConflicts > 0 && p->conflicts != NULL) {

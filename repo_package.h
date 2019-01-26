@@ -21,12 +21,17 @@ typedef struct relation {
   int comp;
 } relation;
 
+typedef struct relation_group {
+    int size;
+    relation* relations;
+} relation_group;
+
 typedef struct package {
   char* name;
   int size;
   version version;
   int cDepends;
-  relation** depends;
+  relation_group* depends;
   int cConflicts;
   relation* conflicts;
 } package;

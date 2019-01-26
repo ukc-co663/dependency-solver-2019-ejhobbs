@@ -18,13 +18,13 @@ int main(int argc, char** argv) {
   if (parsedJson == NULL) {
     const char *e_ptr = cJSON_GetErrorPtr();
     if(e_ptr != NULL) {
-      fprintf(stderr, "JSON parse error: %s\n", e_ptr);
+      fprintf(stderr, "Repository: JSON parse error: %s\n", e_ptr);
     }
     end(input, parsedJson, 1);
   } else {
     /* Do some stuff */
     if (!cJSON_IsArray(parsedJson)){
-      fprintf(stderr,"Expected array, got %#x!\n", parsedJson->type);
+      fprintf(stderr,"Repository expected array, got %#x!\n", parsedJson->type);
       end(input, parsedJson, 1);
     }
 

@@ -3,6 +3,6 @@ clib
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
-ex
+examples
 **/*.ninja*
 solve

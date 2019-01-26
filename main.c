@@ -64,7 +64,7 @@ char* getInput(const char* filename) {
 
   if (fp != NULL) {
     fseek(fp, 0, SEEK_END);
-    long len = ftell(fp); /* find end */
+    size_t len = (size_t) ftell(fp); /* find end */
     rewind(fp);
     char* input = malloc((len+1)*sizeof(char));
     fread(input, sizeof(char), len, fp);

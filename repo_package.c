@@ -38,7 +38,7 @@ package* package_fromJson(const cJSON* jsonPkg){
 
 void getAllDependencies(package* pkg, const cJSON* deps) {
   int numGroups = cJSON_GetArraySize(deps);
-  relation** groups = calloc(numGroups, sizeof(relation*));
+  relation** groups = calloc((size_t) numGroups, sizeof(relation*));
   cJSON* thisItem = NULL;
   int curGroup = 0;
   cJSON_ArrayForEach(thisItem, deps) {
@@ -53,7 +53,7 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
 }
 
 relation* getAllRelations(const cJSON* relationList, int count) {
-  relation* relations = calloc(count, sizeof(relation));
+  relation* relations = calloc((size_t) count, sizeof(relation));
   cJSON* rel = NULL;
   int i = 0;
   cJSON_ArrayForEach(rel, relationList) {
@@ -85,7 +85,7 @@ relation parseRelation(char* rel) {
     }
     curChar++;
   }
-  char* name = calloc(sName+1, sizeof(char));
+  char* name = calloc((size_t) sName+1, sizeof(char));
   strncpy(name, rel, sName);
   name[sName] = 0;
 

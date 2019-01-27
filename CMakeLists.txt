@@ -35,6 +35,6 @@ target_include_directories(cJSON
 add_library(repo_package
         repository.c
         repository.h
-        file.c file.h relation.c relation.h)
+        file.c file.h relation.c relation.h constraints.c constraints.h)
 
 target_link_libraries(repo_package cJSON)

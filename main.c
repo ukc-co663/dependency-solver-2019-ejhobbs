@@ -13,6 +13,10 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
+  /* Get initial system state */
+  states state = state_getFromFile(argv[_state]);
+  printf("Starting with %d packages already installed\n", state.size);
+
   /* Print them all out */
   for (int i=0; i < repo.size; i++) {
     if(repo.packages[i] != NULL) {

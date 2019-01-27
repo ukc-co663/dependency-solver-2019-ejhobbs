@@ -43,6 +43,7 @@ repo_repository repo_getFromFile(const char* f) {
         /* Do some stuff */
         if (!cJSON_IsArray(parsedJson)) {
             fprintf(stderr, "Repository expected array, got %#x!\n", parsedJson->type);
+            cJSON_Delete(parsedJson);
         } else {
             repo = repo_getAll(parsedJson);
         }

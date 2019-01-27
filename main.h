@@ -5,10 +5,11 @@
 
 #include "repository.h"
 #include "state.h"
+#include "constraints.h"
 
 #define _repo 1
 #define _state 2
-#define _commands 3
+#define _constraints 3
 #define _numargs 2
 
 int main(int, char**);

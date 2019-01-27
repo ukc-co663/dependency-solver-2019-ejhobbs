@@ -19,7 +19,7 @@ typedef struct version {
 typedef struct relation {
     char* name;
     version version;
-    int comp;
+    char comp;
 } relation;
 
 typedef struct relation_group {

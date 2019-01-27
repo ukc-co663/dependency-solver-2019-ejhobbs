@@ -17,15 +17,10 @@ int main(int argc, char** argv) {
   states state = state_getFromFile(argv[_state]);
   printf("Starting with %d packages already installed\n", state.size);
 
-  /* Print them all out */
-/*
-  for (int i=0; i < repo.size; i++) {
-    if(repo.packages[i] != NULL) {
-      printf("%s\n", repo.packages[i]->name);
-    }
-  }
-*/
+  constraints constraints = constraints_getFromFile(argv[_constraints]);
+  printf("Given %d constraints to follow\n", constraints.size);
 
+  constraints_freeAll(&constraints);
   state_freeAll(&state);
   repo_freeAll(&repo);
   return 0;

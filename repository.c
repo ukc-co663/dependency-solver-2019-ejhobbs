@@ -1,6 +1,6 @@
 #include "repository.h"
 
-int repo_getPackageIndex(const package_group * grp, const char *name) {
+int repo_getPackageIndex(const repo_repository * grp, const char *name) {
     int idx = -1;
     int l = 0;
     int r = grp->size-1;
@@ -31,7 +31,29 @@ int comparePkg(const void* p, const void* q) {
     return strcmp(l->name, r->name);
 }
 
-package_group repo_getAll(const cJSON *repo) {
+repo_repository repo_getFromFile(const char* f) {
+    repo_repository repo = {0, NULL};
+    char* fContents = getFullContents(f);
+
+    cJSON *parsedJson = cJSON_Parse(fContents);
+    if (parsedJson == NULL) {
+        const char *e_ptr = cJSON_GetErrorPtr();
+        if(e_ptr != NULL) {
+            fprintf(stderr, "Repository: JSON parse error: %s\n", e_ptr);
+        }
+    } else {
+        /* Do some stuff */
+        if (!cJSON_IsArray(parsedJson)) {
+            fprintf(stderr, "Repository expected array, got %#x!\n", parsedJson->type);
+        } else {
+            repo = repo_getAll(parsedJson);
+        }
+    }
+    free(fContents);
+    return repo;
+}
+
+repo_repository repo_getAll(const cJSON *repo) {
     int numPkgs = cJSON_GetArraySize(repo);
     package** availablePkgs = malloc(numPkgs * sizeof(package*));
 
@@ -44,7 +66,7 @@ package_group repo_getAll(const cJSON *repo) {
     }
     /* Sort result for faster finds */
     qsort((void*)availablePkgs, numPkgs, sizeof(package*), comparePkg);
-    package_group group = {numPkgs, availablePkgs};
+    repo_repository group = {numPkgs, availablePkgs, repo};
     return group;
 }
 
@@ -191,13 +213,14 @@ void package_free(package*);
 void relation_free(int, relation*);
 void version_free(version*);
 
-void repo_freeAll(package_group pg) {
+void repo_freeAll(repo_repository pg) {
     for (int i=0; i < pg.size; i++) {
         if(pg.packages[i] != NULL) {
             package_free(pg.packages[i]);
         }
     }
     free(pg.packages);
+    cJSON_Delete(pg.json);
 }
 
 void package_free(package* p) {

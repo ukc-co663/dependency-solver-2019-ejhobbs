@@ -4,5 +4,3 @@
 #define _numargs 2
 
 int main(int, char**);
-char* getInput(const char*);
-void end(char*, cJSON*, int);

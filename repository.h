@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cJSON.h>
+#include "file.h"
 #ifndef repository
 #define repository
 /* Relation flags */
@@ -36,12 +37,14 @@ typedef struct package {
   relation* conflicts;
 } package;
 
-typedef struct package_group {
+typedef struct repo_repository {
     int size;
     package** packages;
-} package_group;
+    cJSON* json;
+} repo_repository;
 
-package_group repo_getAll(const cJSON *);
-int repo_getPackageIndex(const package_group *, const char *);
-void repo_freeAll(package_group);
+repo_repository repo_getFromFile(const char*);
+repo_repository repo_getAll(const cJSON *);
+int repo_getPackageIndex(const repo_repository *, const char *);
+void repo_freeAll(repo_repository);
 #endif

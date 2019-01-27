@@ -18,11 +18,15 @@ int main(int argc, char** argv) {
   printf("Starting with %d packages already installed\n", state.size);
 
   /* Print them all out */
+/*
   for (int i=0; i < repo.size; i++) {
     if(repo.packages[i] != NULL) {
       printf("%s\n", repo.packages[i]->name);
     }
   }
-  repo_freeAll(repo);
+*/
+
+  state_freeAll(&state);
+  repo_freeAll(&repo);
   return 0;
 }

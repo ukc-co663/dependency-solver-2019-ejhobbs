@@ -16,8 +16,14 @@ states state_getFromFile(char* f) {
         } else {
             int numItems = cJSON_GetArraySize(json);
             relation* allRelations = relation_getAll(json, numItems);
-            initialState = (states){numItems, allRelations};
+            initialState = (states){numItems, allRelations, json};
         }
     }
+    free(fContents);
     return initialState;
+}
+
+void state_freeAll(states* s) {
+    relation_free(s->size, s->members);
+    cJSON_Delete(s->json);
 }

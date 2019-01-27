@@ -30,5 +30,7 @@ typedef struct relation_group {
 relation* relation_getAll(const cJSON*, int);
 relation parseRelation(char*);
 version parseVersion(char*);
+void relation_free(int, relation*);
+void version_free(version*);
 
 #endif //SOLVE_RELATION_H

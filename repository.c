@@ -118,17 +118,14 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
 }
 
 void package_free(package*);
-void relation_free(int, relation*);
-void version_free(version*);
-
-void repo_freeAll(repo_repository pg) {
-    for (int i=0; i < pg.size; i++) {
-        if(pg.packages[i] != NULL) {
-            package_free(pg.packages[i]);
+void repo_freeAll(repo_repository* pg) {
+    for (int i=0; i < pg->size; i++) {
+        if(pg->packages[i] != NULL) {
+            package_free(pg->packages[i]);
         }
     }
-    free(pg.packages);
-    cJSON_Delete(pg.json);
+    free(pg->packages);
+    cJSON_Delete(pg->json);
 }
 
 void package_free(package* p) {
@@ -141,18 +138,4 @@ void package_free(package* p) {
     if (p->cConflicts > 0 && p->conflicts != NULL) relation_free(p->cConflicts, p->conflicts);
     version_free(&(p->version));
     free(p);
-}
-
-void relation_free(int s, relation* r) {
-  for (int i = 0; i < s; i++) {
-    free(r[i].name);
-    version_free(&(r[i].version));
-  }
-  free(r);
-}
-
-void version_free(version* v) {
-  if (v->size > 0) {
-    free(v->val);
-  }
 }

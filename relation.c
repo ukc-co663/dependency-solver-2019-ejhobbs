@@ -89,3 +89,17 @@ version parseVersion(char *versionString) {
     version vers = {vSize, parts};
     return vers;
 }
+
+void relation_free(int s, relation* r) {
+    for (int i = 0; i < s; i++) {
+        free(r[i].name);
+        version_free(&(r[i].version));
+    }
+    free(r);
+}
+
+void version_free(version* v) {
+    if (v->size > 0) {
+        free(v->val);
+    }
+}

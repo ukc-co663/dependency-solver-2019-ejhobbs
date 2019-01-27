@@ -7,8 +7,10 @@
 typedef struct states {
     int size;
     relation* members;
+    cJSON* json;
 } states;
 
 states state_getFromFile(char*);
+void state_freeAll(states*);
 
 #endif //SOLVE_STATE_H

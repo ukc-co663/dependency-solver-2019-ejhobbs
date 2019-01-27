@@ -14,6 +14,7 @@ char* getFullContents(const char *filename) {
         fclose(fp);
         return input;
     }
+    fprintf(stderr, "filename: %s\n", filename);
     perror("Failed to open file");
     return NULL;
 }

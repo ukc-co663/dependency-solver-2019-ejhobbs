@@ -1,10 +1,35 @@
 #include "repo_package.h"
 
+int package_getIndex(const package_group* grp, const char* name) {
+    int idx = -1;
+    int l = 0;
+    int r = grp->size-1;
+    while (idx < 0 && l <= r) {
+        int mid = l + (r-l)/2;
+        int cmp = strcmp(name, grp->packages[mid]->name);
+        if (cmp == 0) {
+            idx = mid;
+        } else if (cmp > 0) {
+            l = mid+1;
+        } else {
+            r = mid-1;
+        }
+    }
+    return idx;
+}
+
 package* package_fromJson(const cJSON*);
 version parseVersion(char *);
 void getAllDependencies(package*, const cJSON*);
 relation* getAllRelations(const cJSON*, int);
 relation parseRelation(char*);
+
+int comparePkg(const void* p, const void* q) {
+    const package* l = *(const package**)p;
+    const package* r = *(const package**)q;
+
+    return strcmp(l->name, r->name);
+}
 
 package_group package_getAll(const cJSON* repo) {
     int numPkgs = cJSON_GetArraySize(repo);

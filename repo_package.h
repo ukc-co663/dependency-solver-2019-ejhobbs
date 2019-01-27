@@ -42,14 +42,7 @@ typedef struct package_group {
 } package_group;
 
 package_group package_getAll(const cJSON*);
-int package_getIndex(package_group*);
+int package_getIndex(const package_group*, const char*);
 void package_prettyPrint(const package*);
 void package_freeAll(package_group);
-
-int comparePkg(const void* p, const void* q) {
-    const package* l = *(const package**)p;
-    const package* r = *(const package**)q;
-
-    return strcmp(l->name, r->name);
-}
 #endif

@@ -1,5 +1,28 @@
 #include "repo_package.h"
 
+package* package_fromJson(const cJSON*);
+version parseVersion(char *);
+void getAllDependencies(package*, const cJSON*);
+relation* getAllRelations(const cJSON*, int);
+relation parseRelation(char*);
+
+package_group package_getAll(const cJSON* repo) {
+    int numPkgs = cJSON_GetArraySize(repo);
+    package** availablePkgs = malloc(numPkgs * sizeof(package*));
+
+    /* Go from Json layout to array of struct*s */
+    package** curPackage = availablePkgs;
+    const cJSON *pkg = NULL;
+    cJSON_ArrayForEach(pkg, repo) {
+        *curPackage = package_fromJson(pkg);
+        curPackage++;
+    }
+    /* Sort result for faster finds */
+    qsort((void*)availablePkgs, numPkgs, sizeof(package*), comparePkg);
+    package_group group = {numPkgs, availablePkgs};
+    return group;
+}
+
 package* package_fromJson(const cJSON* jsonPkg){
   cJSON* name = cJSON_GetObjectItemCaseSensitive(jsonPkg, "name");
   cJSON* size = cJSON_GetObjectItemCaseSensitive(jsonPkg, "size");
@@ -13,10 +36,10 @@ package* package_fromJson(const cJSON* jsonPkg){
     fprintf(stderr, "Malformed package information\n");
     return NULL;
   }
-  package* parsed = malloc(sizeof *parsed);
+  package* parsed = calloc(1, sizeof(package));
   parsed->name = name->valuestring;
   parsed->size = size->valueint;
-  parsed->version = versionFromString(version->valuestring);
+  parsed->version = parseVersion(version->valuestring);
 
   int numConflicts = 0;
 
@@ -106,15 +129,14 @@ relation parseRelation(char* rel) {
   }
   version ver = {0, NULL};
   if(num) {
-      ver = versionFromString(curChar);
+      ver = parseVersion(curChar);
   }
 
   relation newRel = {name, ver, comp};
   return newRel;
 }
 
-
-version versionFromString(char* versionString) {
+version parseVersion(char *versionString) {
   int* parts = NULL;
   int vSize = 0;
   char delim[] = ".";
@@ -140,6 +162,31 @@ version versionFromString(char* versionString) {
   return vers;
 }
 
+void package_free(package*);
+void relation_free(int, relation*);
+void version_free(version*);
+
+void package_freeAll(package_group pg) {
+    for (int i=0; i < pg.size; i++) {
+        if(pg.packages[i] != NULL) {
+            package_free(pg.packages[i]);
+        }
+    }
+    free(pg.packages);
+}
+
+void package_free(package* p) {
+    if (p->cDepends > 0 && p->depends != NULL) {
+        for(int i = 0; i < p->cDepends; i++) {
+            relation_free(p->depends[i].size, p->depends[i].relations);
+        }
+        free(p->depends);
+    }
+    if (p->cConflicts > 0 && p->conflicts != NULL) relation_free(p->cConflicts, p->conflicts);
+    version_free(&(p->version));
+    free(p);
+}
+
 void relation_free(int s, relation* r) {
   for (int i = 0; i < s; i++) {
     free(r[i].name);
@@ -154,17 +201,9 @@ void version_free(version* v) {
   }
 }
 
-void package_free(package* p) {
-  if (p->cDepends > 0 && p->depends != NULL) {
-    for(int i = 0; i < p->cDepends; i++) {
-      relation_free(p->depends[i].size, p->depends[i].relations);
-    }
-    free(p->depends);
-  }
-  if (p->cConflicts > 0 && p->conflicts != NULL) relation_free(p->cConflicts, p->conflicts);
-  version_free(&(p->version));
-  free(p);
-}
+void version_prettyPrint(const version*);
+void relations_prettyPrint(int, const relation*);
+void comp_prettyPrint(const int* comp);
 
 void package_prettyPrint(const package* p) {
   printf("\n--[ %s ]--\n", p->name);

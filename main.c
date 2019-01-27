@@ -26,27 +26,18 @@ int main(int argc, char** argv) {
     if (!cJSON_IsArray(parsedJson)){
       fprintf(stderr,"Repository expected array, got %#x!\n", parsedJson->type);
       end(input, parsedJson, 1);
-    }
+    } else {
+      package_group repo = package_getAll(parsedJson);
 
-    int numPkgs = cJSON_GetArraySize(parsedJson);
-    package** availablePkgs = malloc(numPkgs * sizeof *availablePkgs);
-
-    /* Go from Json layout to array of struct*s */
-    package** curPackage = availablePkgs;
-    const cJSON *pkg = NULL;
-    cJSON_ArrayForEach(pkg, parsedJson) {
-      *curPackage = package_fromJson(pkg);
-      curPackage++;
-    }
-
-    /* Deallocate everything */
-    for (int i=0; i < numPkgs; i++) {
-      if(availablePkgs[i] != NULL) {
-        package_prettyPrint(availablePkgs[i]);
-        package_free(availablePkgs[i]);
+      /* Print them all out */
+      for (int i=0; i < repo.size; i++) {
+        if(repo.packages[i] != NULL) {
+          printf("%s\n", repo.packages[i]->name);
+          //          package_prettyPrint(repo.packages[i]);
+        }
       }
+      package_freeAll(repo);
     }
-    free(availablePkgs);
   }
   free(input);
   cJSON_Delete(parsedJson);

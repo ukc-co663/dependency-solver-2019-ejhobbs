@@ -36,16 +36,20 @@ typedef struct package {
   relation* conflicts;
 } package;
 
-package* package_fromJson(const cJSON*);
-version versionFromString(char*);
-void getAllDependencies(package*, const cJSON*);
-relation* getAllRelations(const cJSON*, int);
-relation parseRelation(char*);
+typedef struct package_group {
+    int size;
+    package** packages;
+} package_group;
+
+package_group package_getAll(const cJSON*);
+int package_getIndex(package_group*);
 void package_prettyPrint(const package*);
-void relation_free(int, relation*);
-void version_free(version*);
-void package_free(package*);
-void version_prettyPrint(const version*);
-void relations_prettyPrint(int, const relation*);
-void comp_prettyPrint(const int* comp);
+void package_freeAll(package_group);
+
+int comparePkg(const void* p, const void* q) {
+    const package* l = *(const package**)p;
+    const package* r = *(const package**)q;
+
+    return strcmp(l->name, r->name);
+}
 #endif

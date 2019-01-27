@@ -1,6 +1,6 @@
 #include "relation.h"
 
-relation* getAllRelations(const cJSON* relationList, int count) {
+relation* relation_getAll(const cJSON *relationList, int count) {
     relation* relations = calloc((size_t) count, sizeof(relation));
     cJSON* rel = NULL;
     int i = 0;

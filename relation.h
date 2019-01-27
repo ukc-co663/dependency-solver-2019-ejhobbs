@@ -27,8 +27,8 @@ typedef struct relation_group {
     relation* relations;
 } relation_group;
 
+relation* relation_getAll(const cJSON*, int);
 relation parseRelation(char*);
 version parseVersion(char*);
-
 
 #endif //SOLVE_RELATION_H

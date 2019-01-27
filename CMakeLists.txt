@@ -18,7 +18,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g ")#-fsanitize=address -fno-omit
 project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME}
   main.c
-)
+        state.c state.h)
 
 target_link_libraries(${PROJECT_NAME} repo_package)
 

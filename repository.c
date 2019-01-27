@@ -20,7 +20,7 @@ int repo_getPackageIndex(const repo_repository * grp, const char *name) {
 
 package* package_fromJson(const cJSON*);
 void getAllDependencies(package*, const cJSON*);
-relation* getAllRelations(const cJSON*, int);
+relation* relation_getAll(const cJSON *relationList, int count);
 
 int comparePkg(const void* p, const void* q) {
     const package* l = *(const package**)p;
@@ -93,7 +93,7 @@ package* package_fromJson(const cJSON* jsonPkg){
   }
   if (conflicts != NULL && cJSON_IsArray(conflicts)) {
     numConflicts = cJSON_GetArraySize(conflicts);
-    parsed->conflicts = getAllRelations(conflicts, numConflicts);
+    parsed->conflicts = relation_getAll(conflicts, numConflicts);
     parsed->cConflicts = numConflicts;
   }
 
@@ -107,7 +107,7 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
   int curGroup = 0;
   cJSON_ArrayForEach(thisItem, deps) {
     int thisSize = cJSON_GetArraySize(thisItem);
-    relation* theseRelations = getAllRelations(thisItem, thisSize);
+    relation* theseRelations = relation_getAll(thisItem, thisSize);
 
     relation_group grp = {thisSize, theseRelations};
     groups[curGroup] = grp;

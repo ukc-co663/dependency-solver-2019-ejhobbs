@@ -1,9 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <cJSON.h>
-
-#include "repository.h"
 #include "main.h"
 
 int main(int argc, char** argv) {
@@ -12,6 +6,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
+  /* Get all packages from repository */
   repo_repository repo = repo_getFromFile(argv[_repo]);
   if(repo.size <= 0) {
     fprintf(stderr, "No packages found while parsing repository, exiting");

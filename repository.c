@@ -19,10 +19,8 @@ int repo_getPackageIndex(const repo_repository * grp, const char *name) {
 }
 
 package* package_fromJson(const cJSON*);
-version parseVersion(char *);
 void getAllDependencies(package*, const cJSON*);
 relation* getAllRelations(const cJSON*, int);
-relation parseRelation(char*);
 
 int comparePkg(const void* p, const void* q) {
     const package* l = *(const package**)p;
@@ -117,96 +115,6 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
   }
   pkg->cDepends = numGroups;
   pkg->depends = groups;
-}
-
-relation* getAllRelations(const cJSON* relationList, int count) {
-  relation* relations = calloc((size_t) count, sizeof(relation));
-  cJSON* rel = NULL;
-  int i = 0;
-  cJSON_ArrayForEach(rel, relationList) {
-    relations[i] = parseRelation(rel->valuestring);
-    i++;
-  }
-  return relations;
-}
-
-relation parseRelation(char* rel) {
-  int sName = 0; /* Size of pkg name */
-  int comp = 0; /* Start with any */
-  int sym = 0;
-  char* curChar = rel;
-  /* Loop over the string until we get to the first symbol, ie end of the name*/
-  while(sName < strlen(rel) && !sym){
-    switch(*curChar) {
-      case '<':
-      case '>':
-      case '=':
-        sym = 1;
-        break;
-      default:
-        sName++;
-        break;
-    }
-    if(!sym){
-        curChar++;
-    }
-  }
-  char* name = calloc((size_t) sName+1, sizeof(char));
-  strncpy(name, rel, sName);
-  name[sName] = 0;
-  int num = 0;
-  while(curChar < rel + strlen(rel) && !num) {
-      switch(*curChar) {
-          case '<':
-              comp |= _lt;
-              break;
-          case '>':
-              comp |= _gt;
-              break;
-          case '=':
-              comp |= _eq;
-              break;
-          default:
-              num=1;
-              break;
-      }
-      if (!num) {
-          curChar++;
-      }
-  }
-  version ver = {0, NULL};
-  if(num) {
-      ver = parseVersion(curChar);
-  }
-
-  relation newRel = {name, ver, comp};
-  return newRel;
-}
-
-version parseVersion(char *versionString) {
-  int* parts = NULL;
-  int vSize = 0;
-  char delim[] = ".";
-  char* part = strtok(versionString, delim);
-  if(part == NULL) {
-      parts = malloc(sizeof(int));
-      vSize = 1;
-      *parts = atoi(versionString);
-  } else {
-      while (part != NULL) {
-          int* tmp = realloc(parts, (vSize+1)*sizeof(int));
-          if(tmp != NULL) {
-              parts = tmp;
-              parts[vSize] = atoi(part);
-              part = strtok(NULL, delim);
-              vSize++;
-          } else {
-              perror("Something went wrong");
-          }
-      }
-  }
-  version vers = {vSize, parts};
-  return vers;
 }
 
 void package_free(package*);

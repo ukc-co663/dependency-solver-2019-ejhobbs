@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <cJSON.h>
 
-#include "repo_package.h"
+#include "repository.h"
 #include "main.h"
 
 int main(int argc, char** argv) {
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
       fprintf(stderr,"Repository expected array, got %#x!\n", parsedJson->type);
       end(input, parsedJson, 1);
     } else {
-      package_group repo = package_getAll(parsedJson);
+      package_group repo = repo_getAll(parsedJson);
 
       /* Print them all out */
       for (int i=0; i < repo.size; i++) {
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
           //          package_prettyPrint(repo.packages[i]);
         }
       }
-      package_freeAll(repo);
+      repo_freeAll(repo);
     }
   }
   free(input);

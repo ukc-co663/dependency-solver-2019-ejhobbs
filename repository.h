@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <cJSON.h>
-#ifndef repo_package
-#define repo_package
+#ifndef repository
+#define repository
 /* Relation flags */
 #define _gt 1
 #define _lt 2
@@ -41,8 +41,7 @@ typedef struct package_group {
     package** packages;
 } package_group;
 
-package_group package_getAll(const cJSON*);
-int package_getIndex(const package_group*, const char*);
-void package_prettyPrint(const package*);
-void package_freeAll(package_group);
+package_group repo_getAll(const cJSON *);
+int repo_getPackageIndex(const package_group *, const char *);
+void repo_freeAll(package_group);
 #endif

@@ -1,6 +1,6 @@
-#include "repo_package.h"
+#include "repository.h"
 
-int package_getIndex(const package_group* grp, const char* name) {
+int repo_getPackageIndex(const package_group * grp, const char *name) {
     int idx = -1;
     int l = 0;
     int r = grp->size-1;
@@ -31,7 +31,7 @@ int comparePkg(const void* p, const void* q) {
     return strcmp(l->name, r->name);
 }
 
-package_group package_getAll(const cJSON* repo) {
+package_group repo_getAll(const cJSON *repo) {
     int numPkgs = cJSON_GetArraySize(repo);
     package** availablePkgs = malloc(numPkgs * sizeof(package*));
 
@@ -191,7 +191,7 @@ void package_free(package*);
 void relation_free(int, relation*);
 void version_free(version*);
 
-void package_freeAll(package_group pg) {
+void repo_freeAll(package_group pg) {
     for (int i=0; i < pg.size; i++) {
         if(pg.packages[i] != NULL) {
             package_free(pg.packages[i]);
@@ -224,50 +224,4 @@ void version_free(version* v) {
   if (v->size > 0) {
     free(v->val);
   }
-}
-
-void version_prettyPrint(const version*);
-void relations_prettyPrint(int, const relation*);
-void comp_prettyPrint(const int* comp);
-
-void package_prettyPrint(const package* p) {
-  printf("\n--[ %s ]--\n", p->name);
-  printf("Size: %d\n", p->size);
-  printf("Version: ");
-  version_prettyPrint(&(p->version));
-  printf("\n");
-  if(p->cDepends > 0 && p->depends != NULL) {
-    printf("Depends:\n");
-    for(int i = 0; i < p->cDepends; i++) {
-      relations_prettyPrint(p->depends[i].size, (const relation*) p->depends[i].relations);
-    }
-  }
-  if(p->cConflicts > 0 && p->conflicts != NULL) {
-    printf("Conflicts:\n");
-    relations_prettyPrint(p->cConflicts, (const relation*) p->conflicts);
-  }
-}
-
-void version_prettyPrint(const version* v){
-  if (v->size > 0 && v->val != NULL) {
-    printf("%d", v->val[0]);
-    for (int i=1; i < v->size; i++) {
-      printf(".%d", v->val[i]);
-    }
-  }
-}
-
-void relations_prettyPrint(int s, const relation* rs) {
-  for (int i=0; i < s; i++) {
-    printf("\t %s", rs[i].name);
-    comp_prettyPrint(&(rs[i].comp));
-    version_prettyPrint(&(rs[i].version));
-    printf("\n");
-  }
-}
-
-void comp_prettyPrint(const int* comp){
-  if(*comp & _gt) printf(">");
-  if(*comp & _lt) printf("<");
-  if(*comp & _eq) printf("=");
 }

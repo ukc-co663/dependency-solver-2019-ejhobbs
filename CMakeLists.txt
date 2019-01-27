@@ -33,8 +33,8 @@ target_include_directories(cJSON
 )
 
 add_library(repo_package
-  repo_package.c
-  repo_package.h
+        repository.c
+        repository.h
 )
 
 target_link_libraries(repo_package cJSON)

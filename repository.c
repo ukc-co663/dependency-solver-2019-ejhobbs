@@ -102,18 +102,21 @@ package* package_fromJson(const cJSON* jsonPkg){
 }
 
 void getAllDependencies(package* pkg, const cJSON* deps) {
-  int numGroups = cJSON_GetArraySize(deps);
-  relation_group* groups = calloc((size_t) numGroups, sizeof(relation_group));
-  cJSON* thisItem = NULL;
-  int curGroup = 0;
-  cJSON_ArrayForEach(thisItem, deps) {
-    int thisSize = cJSON_GetArraySize(thisItem);
-    relation* theseRelations = relation_getAll(thisItem, thisSize);
+    int numGroups = cJSON_GetArraySize(deps);
+    relation_group* groups = NULL;
+    if (numGroups > 0) {
+        groups = calloc((size_t) numGroups, sizeof(relation_group));
+        cJSON* thisItem = NULL;
+        int curGroup = 0;
+        cJSON_ArrayForEach(thisItem, deps) {
+            int thisSize = cJSON_GetArraySize(thisItem);
+            relation* theseRelations = relation_getAll(thisItem, thisSize);
 
-    relation_group grp = {thisSize, theseRelations};
-    groups[curGroup] = grp;
-    curGroup++;
-  }
+            relation_group grp = {thisSize, theseRelations};
+            groups[curGroup] = grp;
+            curGroup++;
+        }
+    }
   pkg->cDepends = numGroups;
   pkg->depends = groups;
 }

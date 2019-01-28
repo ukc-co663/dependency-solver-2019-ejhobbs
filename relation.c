@@ -1,12 +1,15 @@
 #include "relation.h"
 
 relation* relation_getAll(const cJSON *relationList, int count) {
-    relation* relations = calloc((size_t) count, sizeof(relation));
-    cJSON* rel = NULL;
-    int i = 0;
-    cJSON_ArrayForEach(rel, relationList) {
-        relations[i] = parseRelation(rel->valuestring);
-        i++;
+    relation* relations = NULL;
+    if(count > 0) {
+        relations = calloc((size_t) count, sizeof(relation));
+        cJSON* rel = NULL;
+        int i = 0;
+        cJSON_ArrayForEach(rel, relationList) {
+            relations[i] = parseRelation(rel->valuestring);
+            i++;
+        }
     }
     return relations;
 }

@@ -20,6 +20,8 @@ int main(int argc, char** argv) {
   constraints constraints = constraints_getFromFile(argv[_constraints]);
   printf("Given %d constraints to follow\n", constraints.size);
 
+  state_prettyPrint(&state);
+
   constraints_freeAll(&constraints);
   state_freeAll(&state);
   repo_freeAll(&repo);

@@ -15,10 +15,8 @@ int main(int argc, char** argv) {
 
   /* Get initial system state */
   states state = state_getFromFile(argv[_state]);
-  printf("Starting with %d packages already installed\n", state.size);
 
   constraints constraints = constraints_getFromFile(argv[_constraints]);
-  printf("Given %d constraints to follow\n", constraints.size);
 
   state_prettyPrint(&state);
 

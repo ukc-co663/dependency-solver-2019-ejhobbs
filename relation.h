@@ -32,5 +32,5 @@ relation parseRelation(char*);
 version parseVersion(char*);
 void relation_free(int, relation*);
 void version_free(version*);
-
+void relation_prettyPrint(relation*);
 #endif //SOLVE_RELATION_H

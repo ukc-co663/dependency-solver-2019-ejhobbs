@@ -24,6 +24,19 @@ states state_getFromFile(char* f) {
     return initialState;
 }
 
+void state_prettyPrint(states* s) {
+  printf("[");
+  for (int i = 0; i < s->size; i++) {
+    printf("\"");
+    relation_prettyPrint(&s->members[i]);
+    printf("\"");
+    if(i < s->size-1) {
+      printf(",");
+    }
+  }
+  printf("]\n");
+}
+
 void state_freeAll(states* s) {
     relation_free(s->size, s->members);
     cJSON_Delete(s->json);

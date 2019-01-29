@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 
   constraints constraints = constraints_getFromFile(argv[_constraints]);
 
-  state_prettyPrint(&state);
+  constraints_prettyPrint(&constraints);
 
   constraints_freeAll(&constraints);
   state_freeAll(&state);

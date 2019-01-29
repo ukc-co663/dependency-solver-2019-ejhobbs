@@ -41,6 +41,20 @@ constraint parseConstraint(char *c) {
     return result;
 }
 
+void constraints_prettyPrint(constraints* c) {
+  printf("[");
+  for (int i = 0; i < c->size; i++) {
+    printf("\"");
+    printf("%c", c->constraints[i].op);
+    relation_prettyPrint(&c->constraints[i].pkg);
+    printf("\"");
+    if(i < c->size-1) {
+      printf(",");
+    }
+  }
+  printf("]\n");
+}
+
 void constraints_freeAll(constraints* cs) {
     for (int i=0; i < cs->size; i++) {
         constraint c = cs->constraints[i];

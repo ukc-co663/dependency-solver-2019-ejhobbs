@@ -19,6 +19,7 @@ typedef struct constraints {
 } constraints;
 
 constraints constraints_getFromFile(char*);
+void constraints_prettyPrint(constraints*);
 void constraints_freeAll(constraints*);
 
 #endif //SOLVE_CONSTRAINTS_H

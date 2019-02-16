@@ -174,6 +174,23 @@ int compareInner(version* v1, version* v2, int idx, int max) {
     }
 }
 
+int relation_satisfiedByVersion(version* v, relation* r) {
+    if(r->version.size > 0) {
+        int relationship = relation_compareVersion(v, &r->version);
+        if (r->comp & _eq && relationship == 0){
+            return 1;
+        }
+        if(r->comp & _lt && relationship < 0){
+            return 1;
+        }
+        if(r->comp & _gt && relationship > 0){
+            return 1;
+        }
+        return 0;
+    }
+    return 1;
+}
+
 int allZero(version* v, int start) {
     int highest = 0;
     for (int i = start; i < v->size; i++) {

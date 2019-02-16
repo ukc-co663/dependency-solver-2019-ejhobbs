@@ -115,30 +115,26 @@ void repo_freeAll(repo_repository* pg) {
     cJSON_Delete(pg->json);
 }
 
-int repo_getPackageIndex(const repo_repository *repo, const char *name, version *v) {
+int repo_getPackageIndex(const repo_repository *repo, relation* r) {
     int idx = 0;
     // while (idx in range AND (name does not match AND first char of repo pkg is < first char of name))
-    while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, name) != 0 && *(repo->packages[idx]->name) < *name)){
+    while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) != 0 && *(repo->packages[idx]->name) < *r->name)){
         /* Increase position in array until either we find a name match, or we go above where it should be */
         idx += 1;
     }
-    if (strcmp(repo->packages[idx]->name, name) != 0){
+    if (strcmp(repo->packages[idx]->name, r->name) != 0){
         /* Went past where the package should have been */
         return -1;
     }
-    if (v->size > 0) {
-      while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, name) == 0)) {
+      while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) == 0)) {
           /* Increase position until we find a version match, or another package */
-        if (relation_compareVersion(&(repo->packages[idx]->version), v) == 0) {
+        if (relation_satisfiedByVersion(&(repo->packages[idx]->version), r)) {
           return idx;
         } else {
           idx++;
         }
       }
-      return -1;
-    } else {
-      return idx;
-    }
+  return -1;
 }
 
 void package_free(package* p) {

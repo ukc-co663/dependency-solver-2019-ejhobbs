@@ -73,11 +73,47 @@ START_TEST(compareVersion_given_v2_longer_but_with_0s_return_0)
     }
 END_TEST
 
+START_TEST(constraint_given_lt_and_version_lt_return_1){
+    int v1[3] = {1,0,0};
+    int v2[3] = {5,4,0};
+    version V1 = {3, v1}; //1.0.0
+    version V2 = {3, v2}; //5.4.0
+    relation rel = {"", V2, _lt};
+    // V1 < V2
+    ck_assert_int_eq(relation_satisfiedByVersion(&V1, &rel), 1);
+}END_TEST
+
+START_TEST(constraint_given_lt_and_version_gt_return_0){
+    int v1[3] = {1,0,0};
+    int v2[3] = {5,4,0};
+    version V1 = {3, v1}; //1.0.0
+    version V2 = {3, v2}; //5.4.0
+    relation rel = {"", V1, _lt};
+    // V1 < V2
+    ck_assert_int_eq(relation_satisfiedByVersion(&V2, &rel), 0);
+}END_TEST
+
+START_TEST(constraint_given_gt_and_version_lt_return_0){
+    int v1[3] = {1,0,0};
+    int v2[3] = {5,4,0};
+    version V1 = {3, v1}; //1.0.0
+    version V2 = {3, v2}; //5.4.0
+    relation rel = {"", V2, _gt};
+    // V1 < V2
+    ck_assert_int_eq(relation_satisfiedByVersion(&V1, &rel), 0);
+}END_TEST
+
+START_TEST(constraint_given_lt_eq_and_version_eq_return_0){
+    int v1[3] = {1,0,0};
+    version V1 = {3, v1}; //1.0.0
+    relation rel = {"", V1, _lt&_eq};
+    // V1 < V2
+    ck_assert_int_eq(relation_satisfiedByVersion(&V1, &rel), 0);
+}END_TEST
+
 Suite* relation_suite(void) {
-    Suite *s;
-    TCase *tc_version;
-    s = suite_create("Relation");
-    tc_version = tcase_create("Compare Version");
+    Suite *s = suite_create("Relation");
+    TCase *tc_version = tcase_create("Compare Version");
     tcase_add_test(tc_version, compareVersion_given_v1_equal_v2_return_0);
     tcase_add_test(tc_version, compareVersion_given_v1_smaller_return_neg);
     tcase_add_test(tc_version, compareVersion_given_v1_larger_return_pos);
@@ -86,7 +122,14 @@ Suite* relation_suite(void) {
     tcase_add_test(tc_version, compareVersion_given_v2_longer_but_with_middle_0s_return_neg);
     tcase_add_test(tc_version, compareVersion_given_v2_longer_but_with_0s_return_0);
 
+    TCase *tc_constraint = tcase_create("Satisfies Constraint");
+    tcase_add_test(tc_constraint, constraint_given_lt_and_version_lt_return_1);
+    tcase_add_test(tc_constraint, constraint_given_lt_and_version_gt_return_0);
+    tcase_add_test(tc_constraint, constraint_given_lt_eq_and_version_eq_return_0);
+    tcase_add_test(tc_constraint, constraint_given_gt_and_version_lt_return_0);
+
     suite_add_tcase(s, tc_version);
+    suite_add_tcase(s, tc_constraint);
     return s;
 }
 
@@ -97,7 +140,7 @@ int main(void) {
 
     s = relation_suite();
     sr = srunner_create(s);
-    srunner_run_all(sr, CK_NORMAL);
+    srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
     return (number_failed == 0) ? EXIT_SUCCESS: EXIT_FAILURE;

@@ -1,27 +1,9 @@
 #include "repository.h"
 
-int repo_getPackageIndex(const repo_repository * grp, const char *name) {
-    int idx = -1;
-    int l = 0;
-    int r = grp->size-1;
-    while (idx < 0 && l <= r) {
-        int mid = l + (r-l)/2;
-        int cmp = strcmp(name, grp->packages[mid]->name);
-        if (cmp == 0) {
-            idx = mid;
-        } else if (cmp > 0) {
-            l = mid+1;
-        } else {
-            r = mid-1;
-        }
-    }
-    return idx;
-}
-
 package* package_fromJson(const cJSON*);
+
 void getAllDependencies(package*, const cJSON*);
 relation* relation_getAll(const cJSON *relationList, int count);
-
 int comparePkg(const void* p, const void* q) {
     const package* l = *(const package**)p;
     const package* r = *(const package**)q;
@@ -122,6 +104,7 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
 }
 
 void package_free(package*);
+
 void repo_freeAll(repo_repository* pg) {
     for (int i=0; i < pg->size; i++) {
         if(pg->packages[i] != NULL) {
@@ -130,6 +113,32 @@ void repo_freeAll(repo_repository* pg) {
     }
     free(pg->packages);
     cJSON_Delete(pg->json);
+}
+
+int repo_getPackageIndex(const repo_repository *repo, const char *name, version *v) {
+    int idx = 0;
+    // while (idx in range AND (name does not match AND first char of repo pkg is < first char of name))
+    while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, name) != 0 && *(repo->packages[idx]->name) < *name)){
+        /* Increase position in array until either we find a name match, or we go above where it should be */
+        idx += 1;
+    }
+    if (strcmp(repo->packages[idx]->name, name) != 0){
+        /* Went past where the package should have been */
+        return -1;
+    }
+    if (v->size > 0) {
+      while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, name) == 0)) {
+          /* Increase position until we find a version match, or another package */
+        if (relation_compareVersion(&(repo->packages[idx]->version), v) == 0) {
+          return idx;
+        } else {
+          idx++;
+        }
+      }
+      return -1;
+    } else {
+      return idx;
+    }
 }
 
 void package_free(package* p) {

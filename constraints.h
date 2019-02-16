@@ -3,8 +3,6 @@
 
 #include "relation.h"
 #include "file.h"
-#define _in '+'
-#define _rm '-'
 
 typedef struct constraint {
     char op; /* install or remove */

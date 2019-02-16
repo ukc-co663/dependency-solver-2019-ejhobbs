@@ -15,10 +15,10 @@ int main(int argc, char** argv) {
 
   /* Get initial system state */
   states state = state_getFromFile(argv[_state]);
-  printf("Starting with %d packages already installed\n", state.size);
-
   constraints constraints = constraints_getFromFile(argv[_constraints]);
-  printf("Given %d constraints to follow\n", constraints.size);
+
+  //TODO: for each state, get list of actual packages (with correct versions) so that we have an accurate list of packages and their dependencies
+  constraints_prettyPrint(&constraints);
 
   constraints_freeAll(&constraints);
   state_freeAll(&state);

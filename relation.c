@@ -93,6 +93,28 @@ version parseVersion(char *versionString) {
     return vers;
 }
 
+void version_prettyPrint(version* v) {
+  for (int i = 0; i < v->size; i++) {
+    printf("%d", v->val[i]);
+    if (i < v->size-1) {
+      printf(".");
+    }
+  }
+}
+
+void comp_prettyPrint(char* c) {
+  if (*c & _gt) printf(">");
+  if (*c & _lt) printf("<");
+  if (*c & _eq) printf("=");
+}
+
+void relation_prettyPrint(relation* r) {
+  printf("%s", r->name);
+  comp_prettyPrint(&r->comp);
+  version_prettyPrint(&r->version);
+}
+
+
 void relation_free(int s, relation* r) {
     for (int i = 0; i < s; i++) {
         free(r[i].name);

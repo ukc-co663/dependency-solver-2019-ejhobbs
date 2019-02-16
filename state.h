@@ -12,5 +12,6 @@ typedef struct states {
 
 states state_getFromFile(char*);
 void state_freeAll(states*);
+void state_prettyPrint(states*);
 
 #endif //SOLVE_STATE_H

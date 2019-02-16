@@ -27,6 +27,7 @@ typedef struct relation_group {
     relation* relations;
 } relation_group;
 
+int relation_compareVersion(version*, version*);
 relation* relation_getAll(const cJSON*, int);
 relation parseRelation(char*);
 version parseVersion(char*);

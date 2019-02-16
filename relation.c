@@ -128,3 +128,58 @@ void version_free(version* v) {
         free(v->val);
     }
 }
+
+int compareInner(version*, version*, int, int);
+int relation_compareVersion(version *v1, version *v2) {
+    if (v1->size > v2->size) {
+        return compareInner(v1, v2, 0, v2->size);
+    }
+    return compareInner(v1, v2, 0, v1->size);
+}
+
+int allZero(version*, int);
+/**
+ * Compares two versions recursively, returning when one is clearly larger/smaller than the other
+ * @param v1
+ * @param v2
+ * @param idx current index
+ * @return if equal 0, else positive for v1 larger and negative for v1 smaller
+ */
+int compareInner(version* v1, version* v2, int idx, int max) {
+    if(idx >= max){
+        //when we get to the end of the smaller version, there may still be more yet in
+        //the larger, and we need to check that final one
+        version* toCheck;
+        if(v1->size <= max) {
+            toCheck = v2;
+        } else {
+            toCheck = v1;
+        }
+        if (allZero(toCheck, idx)) {
+            return 0; //same
+        }
+        if (v1->size > v2->size) {
+            return 1;
+        } else {
+            return -1;
+        }
+
+    } else {
+        int diff = v1->val[idx] - v2->val[idx];
+        if (diff > 0 || diff < 0) {
+            return diff;
+        } else {
+            return compareInner(v1, v2, idx+1, max);
+        }
+    }
+}
+
+int allZero(version* v, int start) {
+    int highest = 0;
+    for (int i = start; i < v->size; i++) {
+        if (v->val[i] > highest){
+            highest = v->val[i];
+        };
+    }
+    return highest == 0;
+}

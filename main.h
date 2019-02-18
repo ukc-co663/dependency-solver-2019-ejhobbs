@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <cJSON.h>
+#include "lib/cJSON/cJSON.h"
 
 #include "repository.h"
 #include "state.h"

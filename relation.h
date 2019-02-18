@@ -1,4 +1,4 @@
-#include "cJSON.h"
+#include "lib/cJSON/cJSON.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,7 +18,7 @@ typedef struct version {
 
 typedef struct relation {
     char* name;
-    version version;
+    struct version version;
     char comp;
 } relation;
 

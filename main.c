@@ -7,20 +7,29 @@ int main(int argc, char** argv) {
   }
 
   /* Get all packages from repository */
-  repo_repository repo = repo_getFromFile(argv[_repo]);
+  repository repo = repo_getFromFile(argv[_repo]);
   if(repo.size <= 0) {
-    fprintf(stderr, "No packages found while parsing repository, exiting");
+    fprintf(stderr, "No packages found while parsing repository, exiting\n");
     exit(1);
   }
 
   /* Get initial system state */
   states state = state_getFromFile(argv[_state]);
-  constraints constraints = constraints_getFromFile(argv[_constraints]);
+  constraints inputConstraints = constraints_getFromFile(argv[_constraints]);
 
-  //TODO: for each state, get list of actual packages (with correct versions) so that we have an accurate list of packages and their dependencies
-  constraints_prettyPrint(&constraints);
+  /* Find a state which satisfies all constraints */
+  states newState;
+  int result = solver_newStateFromConstraints(&repo, &inputConstraints, &state, &newState);
 
-  constraints_freeAll(&constraints);
+  if(!result) {
+    fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
+    exit(1);
+  }
+
+  constraints outputConstraints = solver_toNewState(&state, &newState);
+
+  constraints_freeAll(&outputConstraints);
+  constraints_freeAll(&inputConstraints);
   state_freeAll(&state);
   repo_freeAll(&repo);
   return 0;

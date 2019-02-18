@@ -6,6 +6,7 @@
 #include "repository.h"
 #include "state.h"
 #include "constraints.h"
+#include "solver.h"
 
 #define _repo 1
 #define _state 2

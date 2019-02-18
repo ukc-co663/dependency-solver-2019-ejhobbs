@@ -114,13 +114,17 @@ void relation_prettyPrint(relation* r) {
   version_prettyPrint(&r->version);
 }
 
-
-void relation_free(int s, relation* r) {
+void relation_freeAll(int s, relation* r) {
     for (int i = 0; i < s; i++) {
         free(r[i].name);
         version_free(&(r[i].version));
     }
     free(r);
+}
+
+void relation_free(relation* r) {
+    free(r->name);
+    version_free(&(r->version));
 }
 
 void version_free(version* v) {

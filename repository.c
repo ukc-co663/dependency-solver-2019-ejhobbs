@@ -118,12 +118,13 @@ void repo_freeAll(repository* pg) {
 int repo_getPackageIndex(const repository *repo, relation* r) {
     int idx = 0;
     // while (idx in range AND (name does not match AND first char of repo pkg is < first char of name))
-    while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) != 0 && *(repo->packages[idx]->name) < *r->name)){
+    while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) != 0 && *(repo->packages[idx]->name) <= *r->name)){
         /* Increase position in array until either we find a name match, or we go above where it should be */
         idx += 1;
     }
     if (strcmp(repo->packages[idx]->name, r->name) != 0){
         /* Went past where the package should have been */
+      printf("not found\n");
         return -1;
     }
       while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) == 0)) {
@@ -140,11 +141,11 @@ int repo_getPackageIndex(const repository *repo, relation* r) {
 void package_free(package* p) {
     if (p->cDepends > 0 && p->depends != NULL) {
         for(int i = 0; i < p->cDepends; i++) {
-            relation_free(p->depends[i].size, p->depends[i].relations);
+            relation_freeAll(p->depends[i].size, p->depends[i].relations);
         }
         free(p->depends);
     }
-    if (p->cConflicts > 0 && p->conflicts != NULL) relation_free(p->cConflicts, p->conflicts);
+    if (p->cConflicts > 0 && p->conflicts != NULL) relation_freeAll(p->cConflicts, p->conflicts);
     version_free(&(p->version));
     free(p);
 }

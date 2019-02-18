@@ -4,27 +4,27 @@
 #include "lib/cJSON/cJSON.h"
 #include "file.h"
 #include "relation.h"
-#ifndef repository
-#define repository
+#ifndef repository_h
+#define repository_h
 
 typedef struct package {
   char* name;
   int size;
-  version version;
+  struct version version;
   int cDepends;
   relation_group* depends;
   int cConflicts;
   relation* conflicts;
 } package;
 
-typedef struct repo_repository {
+typedef struct repository {
     int size;
     package** packages;
     cJSON* json;
-} repo_repository;
+} repository;
 
-repo_repository repo_getFromFile(const char*);
-repo_repository repo_getAll(const cJSON *);
-int repo_getPackageIndex(const repo_repository *, relation*);
-void repo_freeAll(repo_repository*);
+repository repo_getFromFile(const char*);
+repository repo_getAll(const cJSON *);
+int repo_getPackageIndex(const repository *, relation*);
+void repo_freeAll(repository*);
 #endif

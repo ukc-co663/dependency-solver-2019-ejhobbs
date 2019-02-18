@@ -11,8 +11,8 @@ int comparePkg(const void* p, const void* q) {
     return strcmp(l->name, r->name);
 }
 
-repo_repository repo_getFromFile(const char* f) {
-    repo_repository repo = {0, NULL};
+repository repo_getFromFile(const char* f) {
+    repository repo = {0, NULL};
     char* fContents = getFullContents(f);
 
     cJSON *parsedJson = cJSON_Parse(fContents);
@@ -34,7 +34,7 @@ repo_repository repo_getFromFile(const char* f) {
     return repo;
 }
 
-repo_repository repo_getAll(const cJSON *repo) {
+repository repo_getAll(const cJSON *repo) {
     int numPkgs = cJSON_GetArraySize(repo);
     package** availablePkgs = malloc(numPkgs * sizeof(package*));
 
@@ -47,7 +47,7 @@ repo_repository repo_getAll(const cJSON *repo) {
     }
     /* Sort result for faster finds */
     qsort((void*)availablePkgs, numPkgs, sizeof(package*), comparePkg);
-    repo_repository group = {numPkgs, availablePkgs, repo};
+    repository group = {numPkgs, availablePkgs, repo};
     return group;
 }
 
@@ -105,7 +105,7 @@ void getAllDependencies(package* pkg, const cJSON* deps) {
 
 void package_free(package*);
 
-void repo_freeAll(repo_repository* pg) {
+void repo_freeAll(repository* pg) {
     for (int i=0; i < pg->size; i++) {
         if(pg->packages[i] != NULL) {
             package_free(pg->packages[i]);
@@ -115,7 +115,7 @@ void repo_freeAll(repo_repository* pg) {
     cJSON_Delete(pg->json);
 }
 
-int repo_getPackageIndex(const repo_repository *repo, relation* r) {
+int repo_getPackageIndex(const repository *repo, relation* r) {
     int idx = 0;
     // while (idx in range AND (name does not match AND first char of repo pkg is < first char of name))
     while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) != 0 && *(repo->packages[idx]->name) < *r->name)){

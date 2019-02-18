@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   }
 
   /* Find a state which satisfies all constraints */
-  states newState;
+  states newState = {0};
   int result = solver_newStateFromConstraints(&repo, &inputConstraints, &inputState, &newState);
 
   state_prettyPrint(&newState);

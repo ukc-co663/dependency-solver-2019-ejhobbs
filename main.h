@@ -11,6 +11,6 @@
 #define _repo 1
 #define _state 2
 #define _constraints 3
-#define _numargs 2
+#define _numargs 4
 
 int main(int, char**);

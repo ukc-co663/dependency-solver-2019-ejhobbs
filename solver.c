@@ -1,7 +1,8 @@
 #include "solver.h"
 
-int solver_newStateFromConstraints(repository* repo, constraints* instr, states* initial, states* out){
+int solver_newStateFromConstraints(repository* repo, constraints* instr, states* in, states* out){
   //TODO: implement
+  *out = (states){0, NULL, NULL};
   return 0;
 }
 

@@ -14,23 +14,30 @@ int main(int argc, char** argv) {
   }
 
   /* Get initial system state */
-  states state = state_getFromFile(argv[_state]);
+  states inputState = state_getFromFile(argv[_state]);
   constraints inputConstraints = constraints_getFromFile(argv[_constraints]);
+
+  if (inputConstraints.size <= 0) {
+    printf("[]\n");
+    exit(0);
+  }
 
   /* Find a state which satisfies all constraints */
   states newState;
-  int result = solver_newStateFromConstraints(&repo, &inputConstraints, &state, &newState);
+  int result = solver_newStateFromConstraints(&repo, &inputConstraints, &inputState, &newState);
 
-  if(!result) {
+  state_prettyPrint(&newState);
+  if(result == 0) {
     fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
     exit(1);
   }
 
-  constraints outputConstraints = solver_toNewState(&state, &newState);
+  constraints outputConstraints = solver_toNewState(&inputState, &newState);
 
   constraints_freeAll(&outputConstraints);
   constraints_freeAll(&inputConstraints);
-  state_freeAll(&state);
+  state_freeAll(&inputState);
+  state_freeAll(&newState);
   repo_freeAll(&repo);
   return 0;
 }

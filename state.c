@@ -26,12 +26,14 @@ states state_getFromFile(char* f) {
 
 void state_prettyPrint(states* s) {
   printf("[");
-  for (int i = 0; i < s->size; i++) {
-    printf("\"");
-    relation_prettyPrint(&s->members[i]);
-    printf("\"");
-    if(i < s->size-1) {
-      printf(",");
+  if(s->size > 0) {
+    for (int i = 0; i < s->size; i++) {
+      printf("\"");
+      relation_prettyPrint(&s->members[i]);
+      printf("\"");
+      if(i < s->size-1) {
+        printf(",");
+      }
     }
   }
   printf("]\n");

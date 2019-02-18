@@ -22,7 +22,7 @@ START_TEST(getPackageIndex_given_name_and_specified_version_not_exists_return_ne
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
-    repo_repository r = {3, pkgs, NULL};
+    repository r = {3, pkgs, NULL};
     int v4[4] = {1,3,5,3};
     version v = {4, v4};
     relation rel = {"pkg", v, _eq};
@@ -47,7 +47,7 @@ START_TEST(getPackageIndex_given_name_and_specified_version_return_that) {
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
-    repo_repository r = {3, pkgs, NULL};
+    repository r = {3, pkgs, NULL};
     relation rel = {"d", V2, _eq};
     ck_assert_int_eq(repo_getPackageIndex(&r,&rel), 1);
 }
@@ -71,7 +71,7 @@ START_TEST(getPackageIndex_given_name_and_null_version_return_first) {
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
-    repo_repository r = {3, pkgs, NULL};
+    repository r = {3, pkgs, NULL};
     version v = {0, NULL};
     relation rel = {"d", v, _eq};
     ck_assert_int_eq(repo_getPackageIndex(&r, &rel), 0);
@@ -96,7 +96,7 @@ START_TEST(getPackageIndex_given_no_name_return_neg) {
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
-    repo_repository r = {3, pkgs, NULL};
+    repository r = {3, pkgs, NULL};
     relation rel = {"not_exists", V2, _eq};
     ck_assert_int_eq(repo_getPackageIndex(&r, &rel), -1);
 }
@@ -120,7 +120,7 @@ START_TEST(getPackageIndex_given_multiple_name_and_version_matches_lt_return_fir
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
-    repo_repository r = {3, pkgs, NULL};
+    repository r = {3, pkgs, NULL};
     relation rel = {"d", V2, _lt};
     ck_assert_int_eq(repo_getPackageIndex(&r, &rel), 0);
 }
@@ -144,7 +144,7 @@ START_TEST(getPackageIndex_given_multiple_name_and_version_matches_gt_return_fir
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
-    repo_repository r = {3, pkgs, NULL};
+    repository r = {3, pkgs, NULL};
     relation rel = {"d", V1, _gt};
     ck_assert_int_eq(repo_getPackageIndex(&r, &rel), 1);
 }

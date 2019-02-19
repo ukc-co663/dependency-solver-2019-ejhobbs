@@ -135,6 +135,9 @@ void version_free(version* v) {
 
 int compareInner(version*, version*, int, int);
 int relation_compareVersion(version *v1, version *v2) {
+    if (v1->size == 0 || v2->size ==0 ) {
+      return 0;
+    }
     if (v1->size > v2->size) {
         return compareInner(v1, v2, 0, v2->size);
     }
@@ -181,18 +184,22 @@ int compareInner(version* v1, version* v2, int idx, int max) {
 int relation_satisfiedByVersion(version* v, relation* r) {
     if(r->version.size > 0) {
         int relationship = relation_compareVersion(v, &r->version);
-        if (r->comp & _eq && relationship == 0){
-            return 1;
-        }
-        if(r->comp & _lt && relationship < 0){
-            return 1;
-        }
-        if(r->comp & _gt && relationship > 0){
-            return 1;
-        }
-        return 0;
+        return relation_satisfiesConstraint(relationship, r->comp);
     }
     return 1;
+}
+
+int relation_satisfiesConstraint(int c, char comp) {
+  if (comp & _eq && c == 0){
+    return 1;
+  }
+  if (comp & _lt && c < 0) {
+    return 1;
+  }
+  if (comp & _gt && c > 0) {
+    return 1;
+  }
+  return 0;
 }
 
 int allZero(version* v, int start) {

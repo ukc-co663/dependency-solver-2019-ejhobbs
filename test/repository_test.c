@@ -53,7 +53,7 @@ START_TEST(getPackageIndex_given_name_and_specified_version_return_that) {
 }
 END_TEST
 
-START_TEST(getPackageIndex_given_name_and_null_version_return_first) {
+START_TEST(getPackageIndex_given_name_and_null_version_return_any) {
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
@@ -74,7 +74,7 @@ START_TEST(getPackageIndex_given_name_and_null_version_return_first) {
     repository r = {3, pkgs, NULL};
     version v = {0, NULL};
     relation rel = {"d", v, _eq};
-    ck_assert_int_eq(repo_getPackageIndex(&r, &rel), 0);
+    ck_assert_str_eq(r.packages[repo_getPackageIndex(&r, &rel)]->name, "d");
 }
 END_TEST
 
@@ -102,7 +102,7 @@ START_TEST(getPackageIndex_given_no_name_return_neg) {
 }
 END_TEST
 
-START_TEST(getPackageIndex_given_multiple_name_and_version_matches_lt_return_first_pos) {
+START_TEST(getPackageIndex_given_multiple_name_and_version_matches_lt_return_any_lt) {
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
@@ -122,11 +122,16 @@ START_TEST(getPackageIndex_given_multiple_name_and_version_matches_lt_return_fir
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
     repository r = {3, pkgs, NULL};
     relation rel = {"d", V2, _lt};
-    ck_assert_int_eq(repo_getPackageIndex(&r, &rel), 0);
+    printf("test failure\n");
+    int pkg = repo_getPackageIndex(&r, &rel);
+    printf("package: %d\n", pkg);
+    ck_assert_int_ge(pkg, 0);
+    ck_assert_str_eq(r.packages[pkg]->name, "d");
+    ck_assert_int_lt(relation_compareVersion(&r.packages[pkg]->version, &V2), 0);
 }
 END_TEST
 
-START_TEST(getPackageIndex_given_multiple_name_and_version_matches_gt_return_first_pos) {
+START_TEST(getPackageIndex_given_multiple_name_and_version_matches_gt_return_first_any_gt) {
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
@@ -146,7 +151,10 @@ START_TEST(getPackageIndex_given_multiple_name_and_version_matches_gt_return_fir
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
     repository r = {3, pkgs, NULL};
     relation rel = {"d", V1, _gt};
-    ck_assert_int_eq(repo_getPackageIndex(&r, &rel), 1);
+    int pkg = repo_getPackage(&r, &rel);
+    ck_assert_int_ge(pkg, 0);
+    ck_assert_str_eq(r.packages[pkg]->name, "d");
+    ck_assert_int_gt(relation_compareVersion(&r.packages[pkg]->version, &V2), 0);
 }
 END_TEST
 
@@ -156,10 +164,10 @@ Suite* repository_suite(void) {
     s = suite_create("Repository");
     tc_package = tcase_create("Find package");
     tcase_add_test(tc_package, getPackageIndex_given_no_name_return_neg);
-    tcase_add_test(tc_package, getPackageIndex_given_name_and_null_version_return_first);
+    tcase_add_test(tc_package, getPackageIndex_given_name_and_null_version_return_any);
     tcase_add_test(tc_package, getPackageIndex_given_name_and_specified_version_return_that);
     tcase_add_test(tc_package, getPackageIndex_given_name_and_specified_version_not_exists_return_neg);
-    tcase_add_test(tc_package, getPackageIndex_given_multiple_name_and_version_matches_lt_return_first_pos);
+    tcase_add_test(tc_package, getPackageIndex_given_multiple_name_and_version_matches_lt_return_any_lt);
     tcase_add_test(tc_package, getPackageIndex_given_multiple_name_and_version_matches_gt_return_first_pos);
     suite_add_tcase(s, tc_package);
     return s;

@@ -8,7 +8,11 @@ int comparePkg(const void* p, const void* q) {
     const package* l = *(const package**)p;
     const package* r = *(const package**)q;
 
-    return strcmp(l->name, r->name);
+    int strRes = strcmp(l->name, r->name);
+    if(strRes != 0) {
+      return strRes;
+    }
+    return relation_compareVersion(&l->version, &r->version);
 }
 
 repository repo_getFromFile(const char* f) {
@@ -116,26 +120,30 @@ void repo_freeAll(repository* pg) {
 }
 
 int repo_getPackageIndex(const repository *repo, relation* r) {
-    int idx = 0;
-    // while (idx in range AND (name does not match AND first char of repo pkg is < first char of name))
-    while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) != 0 && *(repo->packages[idx]->name) <= *r->name)){
-        /* Increase position in array until either we find a name match, or we go above where it should be */
-        idx += 1;
-    }
-    if (strcmp(repo->packages[idx]->name, r->name) != 0){
-        /* Went past where the package should have been */
-      printf("not found\n");
-        return -1;
-    }
-      while(idx < repo->size-1 && (strcmp(repo->packages[idx]->name, r->name) == 0)) {
-          /* Increase position until we find a version match, or another package */
-        if (relation_satisfiedByVersion(&(repo->packages[idx]->version), r)) {
-          return idx;
+    int idx = -1;
+    int left = 0;
+    int right = repo->size-1;
+    while (idx < 0 && left <= right) {
+        int mid = left + (right-left)/2;
+        int cmp = strcmp(r->name, repo->packages[mid]->name);
+        if (cmp == 0) {
+          /* TODO Should check against comp operator */
+          printf("Same name\n v1: "); version_prettyPrint(&r->version); printf(" v2: "); version_prettyPrint(&repo->packages[mid]->version); printf("\n");
+            int vcmp = relation_compareVersion(&repo->packages[mid]->version, &r->version);
+            if (relation_satisfiesConstraint(vcmp, r->comp) == 1) {
+              idx = mid;
+            } else if (vcmp > 0) {
+              left = mid+1;
+            } else {
+              right = mid-1;
+            }
+        } else if (cmp > 0) {
+            left = mid+1;
         } else {
-          idx++;
+            right = mid-1;
         }
-      }
-  return -1;
+    }
+    return idx;
 }
 
 void package_free(package* p) {

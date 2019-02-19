@@ -28,6 +28,7 @@ typedef struct relation_group {
 } relation_group;
 
 int relation_satisfiedByVersion(version*, relation*);
+int relation_satisfiesConstraint(int, char);
 int relation_compareVersion(version*, version*);
 relation* relation_getAll(const cJSON*, int);
 relation parseRelation(char*);
@@ -36,4 +37,5 @@ void relation_free(relation*);
 void relation_freeAll(int, relation*);
 void version_free(version*);
 void relation_prettyPrint(relation*);
+void version_prettyPrint(version* v);
 #endif //SOLVE_RELATION_H

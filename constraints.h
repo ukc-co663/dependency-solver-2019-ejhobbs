@@ -4,6 +4,8 @@
 #include "relation.h"
 #include "file.h"
 
+#define C_INSTALL '+'
+#define C_REMOVE  '-'
 typedef struct constraint {
     char op; /* install or remove */
     relation pkg;

@@ -10,6 +10,7 @@ typedef struct constraint {
 
 } constraint;
 
+/* TODO convert to LL */
 typedef struct constraints {
     int size;
     constraint* constraints;

@@ -22,22 +22,16 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  /* Find a state which satisfies all constraints */
-  states newState = {0};
-  int result = solver_newStateFromConstraints(&repo, &inputConstraints, &inputState, &newState);
+  pkg_rule_list rules = solver_getRules(&repo, &inputConstraints);
 
-  state_prettyPrint(&newState);
+  /*
   if(result == 0) {
     fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
     exit(1);
-  }
+  }*/
 
-  constraints outputConstraints = solver_toNewState(&inputState, &newState);
-
-  constraints_freeAll(&outputConstraints);
   constraints_freeAll(&inputConstraints);
   state_freeAll(&inputState);
-  state_freeAll(&newState);
   repo_freeAll(&repo);
   return 0;
 }

@@ -190,6 +190,9 @@ int relation_satisfiedByVersion(version* v, relation* r) {
 }
 
 int relation_satisfiesConstraint(int c, char comp) {
+  if(comp == 0) {
+    return 1;
+  }
   if (comp & _eq && c == 0){
     return 1;
   }

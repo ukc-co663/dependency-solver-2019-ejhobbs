@@ -16,3 +16,4 @@ typedef struct bool_exp_list {
 } bool_exp_list;
 
 bool_exp_list* solver_getRules(repository* repo, constraints* cs);
+void solver_freeExpList(bool_exp_list*);

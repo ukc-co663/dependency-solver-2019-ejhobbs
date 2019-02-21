@@ -11,7 +11,7 @@ unsigned char charToOp(char* op) {
 }
 
 bool_exp_list* solver_getRules(repository* repo, constraints* cs) {
-  bool_exp_list* rules = calloc(1, sizeof(&rules));
+  bool_exp_list* rules = calloc(1, sizeof(*rules));
   for (int i = 0; i < cs->size; i++) {
     constraint c = cs->constraints[i];
     int idx = repo_getPackageIndex(repo, &c.pkg);
@@ -19,7 +19,7 @@ bool_exp_list* solver_getRules(repository* repo, constraints* cs) {
 
     /* Create rule for this package */
     bool_exp thisPkg = {charToOp(&c.op), cPkg};
-    bool_exp_list* newRules = calloc(1, sizeof(&newRules));
+    bool_exp_list* newRules = calloc(1, sizeof(*newRules));
     newRules->exp = thisPkg;
     newRules->next = rules;
     rules = newRules;
@@ -34,4 +34,12 @@ bool_exp_list* solver_getRules(repository* repo, constraints* cs) {
     }
   }
   return rules;
+}
+
+void solver_freeExpList(bool_exp_list* list) {
+  while (list != NULL) {
+    bool_exp_list* nxt = list->next;
+    free(list);
+    list = nxt;
+  }
 }

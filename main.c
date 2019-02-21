@@ -30,6 +30,7 @@ int main(int argc, char** argv) {
     exit(1);
   }*/
 
+  solver_freeExpList(rules);
   constraints_freeAll(&inputConstraints);
   state_freeAll(&inputState);
   repo_freeAll(&repo);

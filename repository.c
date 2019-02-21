@@ -40,7 +40,7 @@ repository repo_getFromFile(const char* f) {
 
 repository repo_getAll(const cJSON *repo) {
     int numPkgs = cJSON_GetArraySize(repo);
-    package** availablePkgs = malloc(numPkgs * sizeof(package*));
+    package** availablePkgs = calloc(numPkgs, sizeof(*availablePkgs));
 
     /* Go from Json layout to array of struct*s */
     package** curPackage = availablePkgs;

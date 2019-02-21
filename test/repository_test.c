@@ -8,17 +8,17 @@ START_TEST(getPackageIndex_given_name_and_specified_version_not_exists_return_ne
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
-    package pkg1 = {"d", 0, V1, 0, NULL, 0, NULL};
+    package pkg1 = {"d", 0, 0, V1, 0, NULL, 0, NULL};
 
     //pkg2
     int v2[3] = {1,0,2};
     version V2 = {3, v2};
-    package pkg2 = {"d", 0, V2, 0, NULL, 0, NULL};
+    package pkg2 = {"d", 0, 0, V2, 0, NULL, 0, NULL};
 
     //pkg3
     int v3[3] = {0,3,2};
     version V3 = {3, v3};
-    package pkg3 = {"pkg", 0, V3, 0, NULL, 0, NULL};
+    package pkg3 = {"pkg", 0, 0, V3, 0, NULL, 0, NULL};
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
@@ -33,17 +33,17 @@ START_TEST(getPackageIndex_given_name_and_specified_version_return_that) {
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
-    package pkg1 = {"d", 0, V1, 0, NULL, 0, NULL};
+    package pkg1 = {"d", 0, 0, V1, 0, NULL, 0, NULL};
 
     //pkg2
     int v2[3] = {1,0,2};
     version V2 = {3, v2};
-    package pkg2 = {"d", 0, V2, 0, NULL, 0, NULL};
+    package pkg2 = {"d", 0, 0, V2, 0, NULL, 0, NULL};
 
     //pkg3
     int v3[3] = {0,3,2};
     version V3 = {3, v3};
-    package pkg3 = {"pkg", 0, V3, 0, NULL, 0, NULL};
+    package pkg3 = {"pkg", 0, 0, V3, 0, NULL, 0, NULL};
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
@@ -57,17 +57,17 @@ START_TEST(getPackageIndex_given_name_and_null_version_return_any) {
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
-    package pkg1 = {"d", 0, V1, 0, NULL, 0, NULL};
+    package pkg1 = {"d", 0, 0, V1, 0, NULL, 0, NULL};
 
     //pkg2
     int v2[3] = {1,0,2};
     version V2 = {3, v2};
-    package pkg2 = {"d", 0, V2, 0, NULL, 0, NULL};
+    package pkg2 = {"d", 0, 0, V2, 0, NULL, 0, NULL};
 
     //pkg3
     int v3[3] = {0,3,2};
     version V3 = {3, v3};
-    package pkg3 = {"pkg", 0, V3, 0, NULL, 0, NULL};
+    package pkg3 = {"pkg", 0, 0, V3, 0, NULL, 0, NULL};
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
@@ -82,17 +82,17 @@ START_TEST(getPackageIndex_given_no_name_return_neg) {
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
-    package pkg1 = {"d", 0, V1, 0, NULL, 0, NULL};
+    package pkg1 = {"d", 0, 0, V1, 0, NULL, 0, NULL};
 
     //pkg2
     int v2[3] = {1,0,2};
     version V2 = {3, v2};
-    package pkg2 = {"d", 0, V2, 0, NULL, 0, NULL};
+    package pkg2 = {"d", 0, 0, V2, 0, NULL, 0, NULL};
 
     //pkg3
     int v3[3] = {0,3,2};
     version V3 = {3, v3};
-    package pkg3 = {"pkg", 0, V3, 0, NULL, 0, NULL};
+    package pkg3 = {"pkg", 0, 0, V3, 0, NULL, 0, NULL};
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
@@ -106,17 +106,17 @@ START_TEST(getPackageIndex_given_multiple_name_and_version_matches_lt_return_any
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
-    package pkg1 = {"d", 0, V1, 0, NULL, 0, NULL};
+    package pkg1 = {"d", 0, 0, V1, 0, NULL, 0, NULL};
 
     //pkg2
     int v2[3] = {1,0,2};
     version V2 = {3, v2};
-    package pkg2 = {"d", 0, V2, 0, NULL, 0, NULL};
+    package pkg2 = {"d", 0, 0, V2, 0, NULL, 0, NULL};
 
     //pkg3
     int v3[3] = {0,3,2};
     version V3 = {3, v3};
-    package pkg3 = {"pkg", 0, V3, 0, NULL, 0, NULL};
+    package pkg3 = {"pkg", 0, 0, V3, 0, NULL, 0, NULL};
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};
@@ -133,17 +133,17 @@ START_TEST(getPackageIndex_given_multiple_name_and_version_matches_gt_return_any
     //pkg1
     int v1[3] = {0,1,2};
     version V1 = {3, v1};
-    package pkg1 = {"d", 0, V1, 0, NULL, 0, NULL};
+    package pkg1 = {"d", 0, 0, V1, 0, NULL, 0, NULL};
 
     //pkg2
     int v2[3] = {1,0,2};
     version V2 = {3, v2};
-    package pkg2 = {"d", 0, V2, 0, NULL, 0, NULL};
+    package pkg2 = {"d", 0, 0, V2, 0, NULL, 0, NULL};
 
     //pkg3
     int v3[3] = {0,3,2};
     version V3 = {3, v3};
-    package pkg3 = {"pkg", 0, V3, 0, NULL, 0, NULL};
+    package pkg3 = {"pkg", 0, 0, V3, 0, NULL, 0, NULL};
 
     //repo
     package* pkgs[3] = {&pkg1,&pkg2, &pkg3};

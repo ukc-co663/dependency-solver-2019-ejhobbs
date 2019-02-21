@@ -9,6 +9,7 @@
 
 typedef struct package {
   char* name;
+  int seen; /* prevents endless loops in solver */
   int size;
   struct version version;
   int cDepends;

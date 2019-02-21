@@ -11,14 +11,14 @@ typedef struct constraint {
 } constraint;
 
 /* TODO convert to LL */
-typedef struct constraints {
-    int size;
-    constraint* constraints;
+typedef struct constraint_list {
+    constraint cons;
+    struct constraint_list* next;
     cJSON* json;
-} constraints;
+} constraint_list;
 
-constraints constraints_getFromFile(char*);
-void constraints_prettyPrint(constraints*);
-void constraints_freeAll(constraints*);
+constraint_list* constraints_getFromFile(char*);
+void constraints_prettyPrint(constraint_list*);
+void constraints_freeAll(constraint_list*);
 
 #endif //SOLVE_CONSTRAINTS_H

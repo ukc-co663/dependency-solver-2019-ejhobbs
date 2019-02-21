@@ -2,9 +2,9 @@
 
 constraint parseConstraint(char *c);
 
-constraints constraints_getFromFile(char* f) {
+constraint_list* constraints_getFromFile(char* f) {
 
-    constraints cs = {0, NULL, NULL};
+    constraint_list* cs = NULL;
 
     char* fContents = getFullContents(f);
     cJSON* json = cJSON_Parse(fContents);
@@ -19,16 +19,17 @@ constraints constraints_getFromFile(char* f) {
             fprintf(stderr, "Constraints expected array, got %#x!\n",json->type);
             cJSON_Delete(json);
         } else {
-            int numItems = cJSON_GetArraySize(json);
-            constraint* items = calloc(numItems, sizeof(constraint));
-            constraint* thisItem = items;
             cJSON* thisConstraint = NULL;
             cJSON_ArrayForEach(thisConstraint, json) {
-                *thisItem = parseConstraint(thisConstraint->valuestring);
-                thisItem++;
+              constraint_list* newCs = calloc(1, sizeof(*newCs));
+              newCs->cons = parseConstraint(thisConstraint->valuestring);
+              newCs->next = cs;
+              cs = newCs;
             }
-            cs = (constraints) {numItems, items, json};
         }
+    }
+    if (cs != NULL) {
+      cs->json = json;
     }
     free(fContents);
     return cs;
@@ -41,26 +42,30 @@ constraint parseConstraint(char *c) {
     return result;
 }
 
-void constraints_prettyPrint(constraints* c) {
+void csonstraints_prettyPrint(constraint_list* cs) {
   printf("[");
-  for (int i = 0; i < c->size; i++) {
+  while (cs != NULL) {
     printf("\"");
-    printf("%c", c->constraints[i].op);
-    relation_prettyPrint(&c->constraints[i].pkg);
+    printf("%c", cs->cons.op);
+    relation_prettyPrint(&cs->cons.pkg);
     printf("\"");
-    if(i < c->size-1) {
+    if(cs->next != NULL) {
       printf(",");
     }
+    cs = cs->next;
   }
   printf("]\n");
 }
 
-void constraints_freeAll(constraints* cs) {
-    for (int i=0; i < cs->size; i++) {
-        constraint c = cs->constraints[i];
-        free(c.pkg.name);
-        version_free(&c.pkg.version);
+void constraints_freeAll(constraint_list* cs) {
+  while (cs != NULL) {
+    constraint_list* next = cs->next;
+    free(cs->cons.pkg.name);
+    version_free(&cs->cons.pkg.version);
+    if (cs->json != NULL) {
+      cJSON_Delete(cs->json);
     }
-    free(cs->constraints);
-    cJSON_Delete(cs->json);
+    free(cs);
+    cs = next;
+  }
 }

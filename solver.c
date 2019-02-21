@@ -10,10 +10,10 @@ unsigned char charToOp(char* op) {
   return 0;
 }
 
-bool_exp_list* solver_getRules(repository* repo, constraints* cs) {
-  bool_exp_list* rules = calloc(1, sizeof(*rules));
-  for (int i = 0; i < cs->size; i++) {
-    constraint c = cs->constraints[i];
+bool_exp_list* solver_getRules(repository* repo, constraint_list* cs) {
+  bool_exp_list* rules = NULL;
+  while(cs != NULL) {
+    constraint c = cs->cons;
     int idx = repo_getPackageIndex(repo, &c.pkg);
     package* cPkg = repo->packages[idx];
 
@@ -32,6 +32,7 @@ bool_exp_list* solver_getRules(repository* repo, constraints* cs) {
         /* TODO add each dep as +constraint and conflict as -constraint*/
         break;
     }
+    cs = cs->next;
   }
   return rules;
 }

@@ -15,14 +15,14 @@ int main(int argc, char** argv) {
 
   /* Get initial system state */
   states inputState = state_getFromFile(argv[_state]);
-  constraints inputConstraints = constraints_getFromFile(argv[_constraints]);
+  constraint_list* inputConstraints = constraints_getFromFile(argv[_constraints]);
 
-  if (inputConstraints.size <= 0) {
+  if (inputConstraints == NULL) {
     printf("[]\n");
     exit(0);
   }
 
-  bool_exp_list* rules = solver_getRules(&repo, &inputConstraints);
+  bool_exp_list* rules = solver_getRules(&repo, inputConstraints);
 
   /*
   if(result == 0) {
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
   }*/
 
   solver_freeExpList(rules);
-  constraints_freeAll(&inputConstraints);
+  constraints_freeAll(inputConstraints);
   state_freeAll(&inputState);
   repo_freeAll(&repo);
   return 0;

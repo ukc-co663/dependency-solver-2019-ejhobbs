@@ -10,17 +10,16 @@ typedef struct bool_exp {
 typedef struct bool_exp_list {
   bool_exp exp;
   bool_exp* next;
-}
+} bool_exp_list;
 
 typedef struct pkg_rule {
-  package* owner;
-  unsigned int expr_count;
+  constraint* owner;
   bool_exp_list expressions;
-}
+} pkg_rule;
 
 typedef struct pkg_rule_list {
   pkg_rule rule;
   pkg_rule* next;
-}
+} pkg_rule_list;
 
-pkg_rule_list get_final_state(repository* repo, constraints* cs);
+pkg_rule_list solver_getRules(repository* repo, constraints* cs);

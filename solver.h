@@ -6,22 +6,23 @@
 #define REMOVE  2
 
 /**
- * bool_exp_list:
+ * bool_conj:
  * A
  * B -> !D -> F
  * !C
  */
 
-typedef struct bool_exp {
+typedef struct bool_disj {
   unsigned char option;
   package* pkg;
-  struct bool_exp* next;
-} bool_exp;
+  struct bool_disj* next;
+} bool_disj;
 
-typedef struct bool_exp_list {
-  bool_exp* exp;
-  struct bool_exp_list* next;
-} bool_exp_list;
+typedef struct bool_conj {
+  bool_disj* exp;
+  struct bool_conj* next;
+} bool_conj;
 
-bool_exp_list* solver_getRules(repository* repo, constraint_list* cs);
-void solver_freeExpList(bool_exp_list*);
+bool_conj* solver_getRules(repository* repo, constraint_list* cs);
+void solver_prettyPrint(bool_conj* exprs);
+void solver_freeExpList(bool_conj*);

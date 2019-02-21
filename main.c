@@ -22,13 +22,15 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  bool_exp_list* rules = solver_getRules(&repo, inputConstraints);
+  bool_conj* rules = solver_getRules(&repo, inputConstraints);
 
   /*
   if(result == 0) {
     fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
     exit(1);
   }*/
+
+  solver_prettyPrint(rules);
 
   solver_freeExpList(rules);
   constraints_freeAll(inputConstraints);

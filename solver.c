@@ -10,8 +10,8 @@ unsigned char charToOp(char* op) {
   return 0;
 }
 
-bool_exp* newExpression(char inst, package* pkg) {
-  bool_exp* exp = calloc(1, sizeof(*exp));
+bool_disj* newExpression(char inst, package* pkg) {
+  bool_disj* exp = calloc(1, sizeof(*exp));
   exp->option = inst;
   exp->pkg = pkg;
   return exp;
@@ -24,15 +24,15 @@ constraint_list* constraintFromDependency(char op, relation* pkg) {
   return cl;
 }
 
-bool_exp_list* solver_getRules(repository* repo, constraint_list* cs) {
-  bool_exp_list* rules = NULL;
+bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
+  bool_conj* rules = NULL;
   while(cs != NULL) {
     constraint c = cs->cons;
     int idx = repo_getPackageIndex(repo, &c.pkg);
     package* cPkg = repo->packages[idx];
 
     /* Create rule for this package */
-    bool_exp_list* newRules = calloc(1, sizeof(*newRules));
+    bool_conj* newRules = calloc(1, sizeof(*newRules));
     newRules->exp = newExpression(charToOp(&c.op), cPkg);
     newRules->next = rules;
     rules = newRules;
@@ -48,16 +48,16 @@ bool_exp_list* solver_getRules(repository* repo, constraint_list* cs) {
         /* add each dep as +constraint */
         for (int i = 0; i < cPkg->cDepends; i++) {
           relation_group* deps = &cPkg->depends[i];
-          bool_exp* thisGrp = NULL;
+          bool_disj* thisGrp = NULL;
           /* create A v B v C v D statement */
           for (int j = 0; j < deps->size; j++) {
             /* repo, current, head -> return new current*/
             int idx = repo_getPackageIndex(repo, &deps->relations[j]);
             package* thisPkg = repo->packages[idx];
-            if (!(thisPkg->seen & KEEP)) {
+            if (idx >= 0 && !(thisPkg->seen & KEEP)) {
               thisPkg->seen &= KEEP;
 
-              bool_exp* newExp = newExpression(KEEP, thisPkg);
+              bool_disj* newExp = newExpression(KEEP, thisPkg);
               newExp->next = thisGrp;
               thisGrp = newExp;
 
@@ -73,7 +73,7 @@ bool_exp_list* solver_getRules(repository* repo, constraint_list* cs) {
             }
           }
 
-          bool_exp_list* newRules = calloc(1, sizeof(*newRules));
+          bool_conj* newRules = calloc(1, sizeof(*newRules));
           newRules->exp = thisGrp;
           newRules->next = rules;
           rules = newRules;
@@ -82,10 +82,10 @@ bool_exp_list* solver_getRules(repository* repo, constraint_list* cs) {
         for (int i = 0; i < cPkg->cConflicts; i++) {
           int idx = repo_getPackageIndex(repo, &cPkg->conflicts[i]);
           package* thisConflict = repo->packages[idx];
-          if(!(thisConflict->seen & REMOVE)) {
+          if(idx >= 0 && !(thisConflict->seen & REMOVE)) {
             thisConflict->seen &= REMOVE;
 
-            bool_exp_list* newRule = calloc(1, sizeof(*newRule));
+            bool_conj* newRule = calloc(1, sizeof(*newRule));
             newRule->exp = newExpression(REMOVE, thisConflict);
             newRule->next = rules;
             rules = newRule;
@@ -114,12 +114,28 @@ bool_exp_list* solver_getRules(repository* repo, constraint_list* cs) {
   return rules;
 }
 
-void solver_freeExpList(bool_exp_list* list) {
+void solver_prettyPrint(bool_conj* exprs) {
+  while (exprs != NULL) {
+    bool_disj* disj = exprs->exp;
+    while (disj != NULL) {
+      printf("%s", disj->pkg->name);
+      printf("(");
+      version_prettyPrint(&disj->pkg->version);
+      printf(")");
+      if(disj->next != NULL) { printf(" v "); }
+      disj = disj->next;
+    }
+    printf("\n");
+    exprs = exprs->next;
+  }
+}
+
+void solver_freeExpList(bool_conj* list) {
   while (list != NULL) {
-    bool_exp_list* nxt = list->next;
-    bool_exp* exp = list->exp;
+    bool_conj* nxt = list->next;
+    bool_disj* exp = list->exp;
     while(exp != NULL) {
-      bool_exp* nxt = exp->next;
+      bool_disj* nxt = exp->next;
       free(exp);
       exp = nxt;
     }

@@ -127,8 +127,6 @@ int repo_getPackageIndex(const repository *repo, relation* r) {
         int mid = left + (right-left)/2;
         int cmp = strcmp(r->name, repo->packages[mid]->name);
         if (cmp == 0) {
-          /* TODO Should check against comp operator */
-          printf("Same name\n v1: "); version_prettyPrint(&r->version); printf(" v2: "); version_prettyPrint(&repo->packages[mid]->version); printf("\n");
             int vcmp = relation_compareVersion(&repo->packages[mid]->version, &r->version);
             if (relation_satisfiesConstraint(vcmp, r->comp) == 1) {
               idx = mid;

@@ -42,7 +42,7 @@ constraint parseConstraint(char *c) {
     return result;
 }
 
-void csonstraints_prettyPrint(constraint_list* cs) {
+void constraints_prettyPrint(constraint_list* cs) {
   printf("[");
   while (cs != NULL) {
     printf("\"");

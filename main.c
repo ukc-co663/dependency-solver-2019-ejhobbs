@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  bool_exp_list rules = solver_getRules(&repo, &inputConstraints);
+  bool_exp_list* rules = solver_getRules(&repo, &inputConstraints);
 
   /*
   if(result == 0) {

@@ -12,7 +12,7 @@ typedef struct bool_exp {
 
 typedef struct bool_exp_list {
   bool_exp exp;
-  bool_exp* next;
+  struct bool_exp_list* next;
 } bool_exp_list;
 
-bool_exp_list solver_getRules(repository* repo, constraints* cs);
+bool_exp_list* solver_getRules(repository* repo, constraints* cs);

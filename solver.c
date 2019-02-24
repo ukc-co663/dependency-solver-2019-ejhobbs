@@ -149,16 +149,30 @@ void option_prettyPrint(unsigned char* c) {
   }
 }
 
+constraint constraintFromRule(bool_disj* expr) {
+  char cons_op = opToChar(&expr->option);
+  relation r = {expr->pkg->name, expr->pkg->version, _eq};
+  return (constraint) {cons_op, r};
+}
+
+bool_disj* getMinimum(bool_disj* grp) {
+  bool_disj* min = grp;
+  while(grp != NULL) {
+    if (grp->pkg->size < min->pkg->size) {
+      min = grp;
+    }
+    grp = grp->next;
+  }
+  return min;
+}
+
 constraint_list* solver_getConstraints(repository* repo, bool_conj* rules) {
   constraint_list* final = NULL;
   if (rules->next == NULL) {
-    bool_disj* expr = rules->exp;
+    bool_disj* minExpr = getMinimum(rules->exp);
     /* only one rule, can just create a constraint directly */
     constraint_list* thisRule = calloc(1, sizeof(*thisRule));
-    char cons_op = opToChar(&expr->option);
-    relation r = {expr->pkg->name, expr->pkg->version, _eq};
-    constraint thisCons = {cons_op, r};
-    thisRule->cons = thisCons;
+    thisRule->cons = constraintFromRule(minExpr);
     final = thisRule;
   }
   return final;

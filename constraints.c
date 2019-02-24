@@ -35,18 +35,34 @@ constraint_list* constraints_getFromFile(char* f) {
     return cs;
 }
 
+char charToOp(char* c) {
+  switch (*c) {
+    case C_INSTALL:
+      return N_INSTALL;
+    case C_REMOVE:
+      return N_REMOVE;
+  }
+  return 0;
+}
+
 constraint parseConstraint(char *c) {
     constraint result;
-    result.op = *c;
+    result.op = charToOp(c);
     result.pkg = parseRelation(c+1); /* Constraints consist of +/- then a package then eq then version */
     return result;
+}
+
+void constraints_printOp(char* op) {
+  if (*op & N_INSTALL) printf("%c", C_INSTALL);
+  if (*op & N_REMOVE) printf("%c", C_REMOVE);
+  if (*op & N_DEPEND) printf("%c", C_DEPEND);
 }
 
 void constraints_prettyPrint(constraint_list* cs) {
   printf("[");
   while (cs != NULL) {
     printf("\"");
-    printf("%c", cs->cons.op);
+    constraints_printOp(&cs->cons.op);
     relation_prettyPrint(&cs->cons.pkg);
     printf("\"");
     if(cs->next != NULL) {

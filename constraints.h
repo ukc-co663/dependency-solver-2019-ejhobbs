@@ -6,13 +6,17 @@
 
 #define C_INSTALL '+'
 #define C_REMOVE  '-'
+#define C_DEPEND '?'
+
+#define N_INSTALL 1
+#define N_REMOVE 2
+#define N_DEPEND 4
 typedef struct constraint {
     char op; /* install or remove */
     relation pkg;
 
 } constraint;
 
-/* TODO convert to LL */
 typedef struct constraint_list {
     constraint cons;
     struct constraint_list* next;
@@ -20,6 +24,7 @@ typedef struct constraint_list {
 } constraint_list;
 
 constraint_list* constraints_getFromFile(char*);
+void constraints_printOp(char* c);
 void constraints_prettyPrint(constraint_list*);
 void constraints_freeAll(constraint_list*);
 

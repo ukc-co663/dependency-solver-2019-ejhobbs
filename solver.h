@@ -2,9 +2,6 @@
 #include "state.h"
 #include "constraints.h"
 
-#define KEEP    1
-#define REMOVE  2
-#define DEPEND  4
 /**
  * bool_conj:
  * A
@@ -13,7 +10,7 @@
  */
 
 typedef struct bool_disj {
-  unsigned char option;
+  char option;
   package* pkg;
   struct bool_disj* next;
 } bool_disj;

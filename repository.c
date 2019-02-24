@@ -123,29 +123,36 @@ void repo_freeAll(repository* pg) {
     cJSON_Delete(pg->json);
 }
 
+int compareNames(const repository* r, char* n, int i) {
+  return strcmp(n, r->packages[i]->name);
+}
+
+int satisfiesConstraint(const repository* r, relation* rl, int i) {
+  return relation_satisfiedByVersion(&r->packages[i]->version, rl);
+}
+/* Linear search through the whole repository. NOT the most efficient by any
+ * stretch, but it does guarantee that we will always get the minimal cost
+ * package for a given constraint
+ */
 int repo_getPackageIndex(const repository *repo, relation* r) {
-    int idx = -1;
-    int left = 0;
-    int right = repo->size-1;
-    while (idx < 0 && left <= right) {
-        int mid = left + (right-left)/2;
-        int cmp = strcmp(r->name, repo->packages[mid]->name);
-        if (cmp == 0) {
-            int vcmp = relation_compareVersion(&repo->packages[mid]->version, &r->version);
-            if (relation_satisfiesConstraint(vcmp, r->comp) == 1) {
-              idx = mid;
-            } else if (vcmp > 0) {
-              left = mid+1;
-            } else {
-              right = mid-1;
-            }
-        } else if (cmp > 0) {
-            left = mid+1;
-        } else {
-            right = mid-1;
-        }
-    }
-    return idx;
+  int max = repo->size;
+  int idx = 0;
+
+  /* Increase until we find a matching name */
+  while(idx < max && compareNames(repo, r->name, idx) > 0) {
+    idx++;
+  };
+
+  if(compareNames(repo, r->name, idx) != 0) return -1; /* went past where it should have been */
+
+  /* Increase until we find the first pkg to satisfy the constraint */
+  while(idx < max && compareNames(repo, r->name, idx) == 0 && satisfiesConstraint(repo, r, idx) != 1) {
+    idx++;
+  }
+
+  if(compareNames(repo, r->name, idx) != 0) return -1; /* went past where it should have been */
+
+  return idx;
 }
 
 void package_free(package* p) {

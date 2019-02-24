@@ -12,6 +12,10 @@ int comparePkg(const void* p, const void* q) {
     if(strRes != 0) {
       return strRes;
     }
+    int sizeDiff = l->size - r->size;
+    if(sizeDiff != 0) {
+      return sizeDiff;
+    }
     return relation_compareVersion(&l->version, &r->version);
 }
 

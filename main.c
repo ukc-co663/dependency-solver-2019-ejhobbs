@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     exit(1);
   }*/
 
-  solver_prettyPrint(rules);
+ // solver_prettyPrint(rules);
   constraints_prettyPrint(outputConstraints);
 
   solver_freeExpList(rules);

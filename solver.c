@@ -114,7 +114,7 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
 }
 
 constraint constraintFromRule(bool_disj* expr) {
-  char cons_op = expr->option & ~(N_DEPEND);
+  char cons_op = expr->option & ~(N_DEPEND); /* nand with N_DEPEND to remove markers that we use to see where packages are from */
   relation r = {expr->pkg->name, expr->pkg->version, _eq};
   return (constraint) {cons_op, r};
 }
@@ -136,8 +136,23 @@ char reverseOperator(char op) {
   return 0;
 }
 
+constraint_list* reverse(constraint_list* rules) {
+  constraint_list* prev = NULL;
+  constraint_list* next = NULL;
+  constraint_list* cur = rules;
+  while (cur != NULL) {
+    next = cur->next;
+    cur->next = prev;
+    prev = cur;
+    cur = next;
+  }
+
+  return prev;
+}
+
 bool_conj* simplifyRules(bool_conj* rules) {
-  return rules;
+  bool_conj* top = rules;
+  return top;
 }
 
 bool_conj* removeContradictions(bool_conj* rules) {
@@ -166,7 +181,7 @@ constraint_list* solver_getConstraints(repository* repo, bool_conj* rules) {
     }
   }
 
-  return final;
+  return reverse(final);
 }
 
 void solver_prettyPrint(bool_conj* exprs) {

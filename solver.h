@@ -4,7 +4,7 @@
 
 #define KEEP    1
 #define REMOVE  2
-
+#define DEPEND  4
 /**
  * bool_conj:
  * A
@@ -24,5 +24,6 @@ typedef struct bool_conj {
 } bool_conj;
 
 bool_conj* solver_getRules(repository* repo, constraint_list* cs);
+constraint_list* solver_getConstraints(repository*, bool_conj*);
 void solver_prettyPrint(bool_conj* exprs);
 void solver_freeExpList(bool_conj*);

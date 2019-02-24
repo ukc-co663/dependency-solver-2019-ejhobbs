@@ -24,16 +24,18 @@ int main(int argc, char** argv) {
 
   bool_conj* rules = solver_getRules(&repo, inputConstraints);
 
+  constraint_list* outputConstraints = solver_getConstraints(&repo, rules);
   /*
   if(result == 0) {
     fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
     exit(1);
   }*/
 
-  solver_prettyPrint(rules);
+  constraints_prettyPrint(outputConstraints);
 
   solver_freeExpList(rules);
   constraints_freeAll(inputConstraints);
+  constraints_freeAll(outputConstraints);
   state_freeAll(&inputState);
   repo_freeAll(&repo);
   return 0;

@@ -14,18 +14,17 @@
 typedef struct constraint {
     char op; /* install or remove */
     relation pkg;
-
+    struct constraint* next;
 } constraint;
 
 typedef struct constraint_list {
-    constraint cons;
-    struct constraint_list* next;
+    constraint* cons;
     cJSON* json;
 } constraint_list;
 
-constraint_list* constraints_getFromFile(char*);
+constraint_list constraints_getFromFile(char*);
 void constraints_printOp(char* c);
-void constraints_prettyPrint(constraint_list*);
+void constraints_prettyPrint(constraint*);
 void constraints_freeAll(constraint_list*);
 
 #endif //SOLVE_CONSTRAINTS_H

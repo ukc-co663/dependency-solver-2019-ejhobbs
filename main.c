@@ -15,28 +15,21 @@ int main(int argc, char** argv) {
 
   /* Get initial system state */
   states inputState = state_getFromFile(argv[_state]);
-  constraint_list* inputConstraints = constraints_getFromFile(argv[_constraints]);
+  constraint_list inputConstraints = constraints_getFromFile(argv[_constraints]);
 
-  if (inputConstraints == NULL) {
+  if (inputConstraints.cons == NULL) {
     /* no constraints, nothing to do! */
     printf("[]\n");
     exit(0);
   }
 
-  conj* rules = solver_getRules(&repo, inputConstraints);
+  option rules = solver_getRoute(&repo, inputConstraints.cons);
 
-  constraint_list* outputConstraints = solver_getConstraints(&repo, &inputState, rules);
-  /*
-  if(result == 0) {
-    fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
-    exit(1);
-  }*/
-
+  constraint* outputConstraints = solver_getConstraints(&repo, &inputState, &rules);
   constraints_prettyPrint(outputConstraints);
 
-  solver_freeExpList(rules);
-  constraints_freeAll(inputConstraints);
-  constraints_freeAll(outputConstraints);
+  constraints_freeAll(&inputConstraints);
+  constraints_freeAll(&(constraint_list){outputConstraints, NULL});
   state_freeAll(&inputState);
   repo_freeAll(&repo);
   return 0;

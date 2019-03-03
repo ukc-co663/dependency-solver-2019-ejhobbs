@@ -3,31 +3,39 @@
 #include "constraints.h"
 #include "relation.h"
 
-#define PROC_UNIT 1
-#define PROC_DUP  2
-#define PROC_RED  4
+/**
+ * For storing dependencies, contains the options that we have
+ * as well as the current 'best guess'.
+ */
+typedef struct d_path {
+  int cur; /* which is our current guess */
+  relation* options; /* options we can choose */
+} d_path;
+
+typedef struct node {
+  relation rel; /* what packages are we allowed */
+  int pkg; /* what have we chosen currently (index into repo) */
+  d_path* dependencies; /* Each dependency this package lists */
+  struct node** followers; /* following nodes (per dependency) */
+} node;
 
 /**
- * conj:
- * A
- * B -> !D -> F
- * !C
+ * We could have used relation_group here, but since this is going to
+ * be changing a lot it's better to have it as a linked list instead
  */
+typedef struct disallowed {
+  relation rel; /* thing we CAN'T have */
+  struct disallowed* next;
+} disallowed;
 
-typedef struct disj {
-  char option;
-  relation rel;
-  package* pkg;
-  struct disj* next;
-} disj;
+/**
+ * Root node for our dependency graph. This will be passed around
+ * and contains the route, and the things we have to avoid
+ */
+typedef struct option {
+  node* route;
+  struct disallowed* disallowed; /* things we're not allowed to install */
+} option;
 
-typedef struct conj {
-  int processed;
-  disj* exp;
-  struct conj* next;
-} conj;
-
-conj* solver_getRules(repository* repo, constraint_list* cs);
-constraint_list* solver_getConstraints(repository*, states*, conj*);
-void solver_prettyPrint(conj* exprs);
-void solver_freeExpList(conj*);
+option solver_getRoute(const repository*, const constraint*);
+constraint* solver_getConstraints(const repository*, const states*, const option*);

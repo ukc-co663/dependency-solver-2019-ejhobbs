@@ -223,11 +223,46 @@ int findAndRemoveUnit(conj* rules) {
  */
 int findAndRemoveDuplicate(conj* rules) {
   int status = -1;
+  conj* thisRule = rules;
+  while (thisRule != NULL) {
+    thisRule = thisRule->next;
+  }
   return status;
 }
 
-conj* removeContradictions(conj* rules) {
-  return rules;
+int tidyUninstalls(repository* repo, conj* r, states* s) {
+  int status = -1;
+  conj* thisRule = r;
+  while (status == -1 && thisRule != NULL) {
+    disj* thisExpr = thisRule->exp;
+    if (thisExpr->option & N_REMOVE && thisExpr->option & N_DEPEND) {
+      /* if something is installed already - create rule to remove it specifically */
+      state_member* thisMember = s->members;
+      int found = 0;
+      while(thisMember != NULL) {
+        if (relation_satisfiedByVersion(&thisMember->rel.version, &thisExpr->rel)){
+          found = -1;
+          disj* removeThis = calloc(1, sizeof(*removeThis));
+          removeThis->next = thisExpr->next;
+          removeThis->option = N_REMOVE;
+          removeThis->pkg = repo->packages[repo_getPackageIndex(repo, &thisMember->rel)];
+          *thisExpr = *removeThis;
+        }
+        thisMember = thisMember->next;
+      }
+
+      /* if not, discard this */
+      if (found == 0) {
+        *thisRule = *thisRule->next;
+      } else {
+        thisRule = thisRule->next;
+      }
+      status = 0;
+    } else {
+      thisRule = thisRule->next;
+    }
+  }
+  return status;
 }
 
 constraint_list* solver_getConstraints(repository* repo, states* currentState, conj* rules) {
@@ -247,6 +282,14 @@ constraint_list* solver_getConstraints(repository* repo, states* currentState, c
     int hasDups = 0;
     while(hasDups != -1) {
       hasDups = findAndRemoveDuplicate(rules);
+    }
+
+    int fixUninstall = 0;
+      //solver_prettyPrint(rules);
+    while (fixUninstall != -1) {
+      fixUninstall = tidyUninstalls(repo, rules, currentState);
+      //printf("\n----------\n");
+      //solver_prettyPrint(rules);
     }
     while (rules != NULL) {
       disj* minExpr = getMinimum(rules->exp);

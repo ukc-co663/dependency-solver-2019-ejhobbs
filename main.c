@@ -25,9 +25,6 @@ int main(int argc, char** argv) {
 
   conj* rules = solver_getRules(&repo, inputConstraints);
 
-//  solver_prettyPrint(rules);
-//  printf("\n-----\n");
-
   constraint_list* outputConstraints = solver_getConstraints(&repo, &inputState, rules);
   /*
   if(result == 0) {

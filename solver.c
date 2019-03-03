@@ -150,9 +150,12 @@ constraint_list* reverse(constraint_list* rules) {
   return prev;
 }
 
-bool_conj* simplifyRules(bool_conj* rules) {
-  bool_conj* top = rules;
-  return top;
+/**
+ * Remove a single unit clause from subexpressions.
+ * If there are no units to remove, return -1
+ */
+int removeUnit(bool_conj* rules) {
+  return -1;
 }
 
 bool_conj* removeContradictions(bool_conj* rules) {
@@ -169,8 +172,11 @@ constraint_list* solver_getConstraints(repository* repo, bool_conj* rules) {
     thisRule->next = final;
     final = thisRule;
   } else {
-    bool_conj* simplified = simplifyRules(rules);
-    bool_conj* noContradictions = removeContradictions(simplified);
+    int hasUnits = 0;
+    while (hasUnits != -1) {
+      hasUnits = removeUnit(rules);
+    }
+    bool_conj* noContradictions = removeContradictions(rules);
     while (noContradictions != NULL) {
       bool_disj* minExpr = getMinimum(noContradictions->exp);
       constraint_list* thisRule = calloc(1, sizeof(*thisRule));

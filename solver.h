@@ -1,26 +1,33 @@
 #include "repository.h"
 #include "state.h"
 #include "constraints.h"
+#include "relation.h"
+
+#define PROC_UNIT 1
+#define PROC_DUP  2
+#define PROC_RED  4
 
 /**
- * bool_conj:
+ * conj:
  * A
  * B -> !D -> F
  * !C
  */
 
-typedef struct bool_disj {
+typedef struct disj {
   char option;
+  relation rel;
   package* pkg;
-  struct bool_disj* next;
-} bool_disj;
+  struct disj* next;
+} disj;
 
-typedef struct bool_conj {
-  bool_disj* exp;
-  struct bool_conj* next;
-} bool_conj;
+typedef struct conj {
+  int processed;
+  disj* exp;
+  struct conj* next;
+} conj;
 
-bool_conj* solver_getRules(repository* repo, constraint_list* cs);
-constraint_list* solver_getConstraints(repository*, bool_conj*);
-void solver_prettyPrint(bool_conj* exprs);
-void solver_freeExpList(bool_conj*);
+conj* solver_getRules(repository* repo, constraint_list* cs);
+constraint_list* solver_getConstraints(repository*, states*, conj*);
+void solver_prettyPrint(conj* exprs);
+void solver_freeExpList(conj*);

@@ -1,7 +1,7 @@
 #include "solver.h"
 
-bool_disj* newExpression(char inst, package* pkg) {
-  bool_disj* exp = calloc(1, sizeof(*exp));
+disj* newExpression(char inst, package* pkg) {
+  disj* exp = calloc(1, sizeof(*exp));
   exp->option = inst;
   exp->pkg = pkg;
   return exp;
@@ -14,8 +14,8 @@ constraint_list* constraintFromDependency(char op, relation* pkg) {
   return cl;
 }
 
-bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
-  bool_conj* rules = NULL;
+conj* solver_getRules(repository* repo, constraint_list* cs) {
+  conj* rules = NULL;
   while(cs != NULL) {
     constraint c = cs->cons;
     int idx = repo_getPackageIndex(repo, &c.pkg);
@@ -23,7 +23,7 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
 
     if (!(c.op & N_DEPEND) || cPkg->cConflicts != 0 || cPkg->depends != 0) {
       /* Create rule for this package */
-      bool_conj* newRules = calloc(1, sizeof(*newRules));
+      conj* newRules = calloc(1, sizeof(*newRules));
       newRules->exp = newExpression(c.op, cPkg);
       newRules->next = rules;
       rules = newRules;
@@ -35,7 +35,7 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
           /* add each dep as +constraint */
           for (int i = 0; i < cPkg->cDepends; i++) {
             relation_group* deps = &cPkg->depends[i];
-            bool_disj* thisGrp = NULL;
+            disj* thisGrp = NULL;
             /* create A v B v C v D statement */
             for (int j = 0; j < deps->size; j++) {
               /* repo, current, head -> return new current*/
@@ -45,7 +45,7 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
                 if ((thisPkg->seen & N_INSTALL) == 0) {
                   thisPkg->seen |= N_INSTALL | N_DEPEND;
 
-                  bool_disj* newExp = newExpression(N_INSTALL | N_DEPEND, thisPkg);
+                  disj* newExp = newExpression(N_INSTALL | N_DEPEND, thisPkg);
                   newExp->next = thisGrp;
                   thisGrp = newExp;
                 }
@@ -63,11 +63,12 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
             }
 
             if (thisGrp != NULL) {
-              bool_disj* orNotThis = newExpression(N_REMOVE | N_DEPEND, cPkg);
+              disj* orNotThis = newExpression(N_REMOVE | N_DEPEND, cPkg);
               orNotThis->next = thisGrp;
               thisGrp = orNotThis;
 
-              bool_conj* newRules = calloc(1, sizeof(*newRules));
+              conj* newRules = calloc(1, sizeof(*newRules));
+              newRules->processed = 0;
               newRules->exp = thisGrp;
               newRules->next = rules;
               rules = newRules;
@@ -80,10 +81,12 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
             if(idx >= 0) {
               thisConflict->seen |= N_REMOVE | N_DEPEND;
 
-              bool_disj* notThis = newExpression(N_REMOVE | N_DEPEND, thisConflict);
+              disj* notThis = newExpression(N_REMOVE | N_DEPEND, thisConflict);
               notThis->next = newExpression(N_REMOVE, cPkg);
+              notThis->rel = cPkg->conflicts[i];
 
-              bool_conj* newRule = calloc(1, sizeof(*newRule));
+              conj* newRule = calloc(1, sizeof(*newRule));
+              newRule->processed = 0;
               newRule->exp = notThis;
               newRule->next = rules;
 
@@ -113,16 +116,24 @@ bool_conj* solver_getRules(repository* repo, constraint_list* cs) {
   return rules;
 }
 
-constraint constraintFromRule(bool_disj* expr) {
+constraint constraintFromRule(disj* expr) {
   char cons_op = expr->option & ~(N_DEPEND); /* nand with N_DEPEND to remove markers that we use to see where packages are from */
   relation r = {expr->pkg->name, expr->pkg->version, _eq};
   return (constraint) {cons_op, r};
 }
 
-bool_disj* getMinimum(bool_disj* grp) {
-  bool_disj* min = grp;
+disj* getMinimum(disj* grp) {
+  disj* min = grp;
+  int minCost = 1000000000;
   while(grp != NULL) {
-    if (grp->pkg->size < min->pkg->size) {
+    int cost;
+    if(grp->option & N_REMOVE) {
+      cost = 1000000;
+    } else {
+      cost = grp->pkg->size;
+    }
+    if (cost < minCost) {
+      minCost = cost;
       min = grp;
     }
     grp = grp->next;
@@ -130,10 +141,11 @@ bool_disj* getMinimum(bool_disj* grp) {
   return min;
 }
 
-char reverseOperator(char op) {
-  if (op & N_INSTALL) return N_REMOVE;
-  if (op & N_REMOVE) return N_INSTALL;
-  return 0;
+disj reverseDisjunction(disj* d) {
+  char newOp = 0;
+  if (d->option & N_INSTALL) newOp = N_REMOVE;
+  if (d->option & N_REMOVE) newOp = N_INSTALL;
+  return (disj) {newOp, d->rel, d->pkg, d->next};
 }
 
 constraint_list* reverse(constraint_list* rules) {
@@ -150,23 +162,79 @@ constraint_list* reverse(constraint_list* rules) {
   return prev;
 }
 
+void removeUnit(conj* rules, disj unit) {
+  conj* thisRule = rules;
+  while (thisRule != NULL) {
+    disj* thisExpr = thisRule->exp;
+    disj* prev = NULL;
+    while (thisExpr != NULL) {
+      if (thisExpr->pkg == unit.pkg && thisExpr->option & unit.option) {
+        /* found a match, remove from list */
+        if (prev == NULL) {
+          /* in this case, we're at the top of the list. Thus, if next == NULL
+           * then we've ended up passing in a unit clause which shouldn't
+           * happen
+           */
+          if (thisExpr->next != NULL) {
+            *thisExpr = *thisExpr->next;
+          }
+        } else {
+          if (thisExpr->next != NULL) {
+            *prev->next = *thisExpr->next;
+            *thisExpr = *thisExpr->next;
+          } else {
+            prev->next = NULL;
+            thisExpr = NULL;
+          }
+        }
+      } else {
+        prev = thisExpr;
+        thisExpr = thisExpr->next;
+      }
+    }
+    thisRule = thisRule->next;
+  }
+}
+
 /**
  * Remove a single unit clause from subexpressions.
  * If there are no units to remove, return -1
  */
-int removeUnit(bool_conj* rules) {
-  return -1;
+int findAndRemoveUnit(conj* rules) {
+  int status = -1;
+  conj* firstUnit = rules;
+  while (status == -1 && firstUnit != NULL) {
+    disj* thisExpr = firstUnit->exp;
+    if (firstUnit->processed & PROC_UNIT && thisExpr->next == NULL) {
+      /* found a unit */
+      disj opposite = reverseDisjunction(thisExpr);
+      removeUnit(rules, opposite);
+      firstUnit->processed |= PROC_UNIT;
+      status = 0;
+    }
+    firstUnit = firstUnit->next;
+  }
+  return status;
 }
 
-bool_conj* removeContradictions(bool_conj* rules) {
+/**
+ * Remove a single clause from subexpressions, and remove
+ * toplevel duplicates (if they're units)
+ */
+int findAndRemoveDuplicate(conj* rules) {
+  int status = -1;
+  return status;
+}
+
+conj* removeContradictions(conj* rules) {
   return rules;
 }
 
-constraint_list* solver_getConstraints(repository* repo, bool_conj* rules) {
+constraint_list* solver_getConstraints(repository* repo, states* currentState, conj* rules) {
   constraint_list* final = NULL;
   if (rules->next == NULL) {
     /* only one rule, can just install the smallest package and we're done */
-    bool_disj* minExpr = getMinimum(rules->exp);
+    disj* minExpr = getMinimum(rules->exp);
     constraint_list* thisRule = calloc(1, sizeof(*thisRule));
     thisRule->cons = constraintFromRule(minExpr);
     thisRule->next = final;
@@ -174,25 +242,28 @@ constraint_list* solver_getConstraints(repository* repo, bool_conj* rules) {
   } else {
     int hasUnits = 0;
     while (hasUnits != -1) {
-      hasUnits = removeUnit(rules);
+      hasUnits = findAndRemoveUnit(rules);
     }
-    bool_conj* noContradictions = removeContradictions(rules);
-    while (noContradictions != NULL) {
-      bool_disj* minExpr = getMinimum(noContradictions->exp);
+    int hasDups = 0;
+    while(hasDups != -1) {
+      hasDups = findAndRemoveDuplicate(rules);
+    }
+    while (rules != NULL) {
+      disj* minExpr = getMinimum(rules->exp);
       constraint_list* thisRule = calloc(1, sizeof(*thisRule));
       thisRule->cons = constraintFromRule(minExpr);
       thisRule->next = final;
       final = thisRule;
-      noContradictions = noContradictions->next;
+      rules = rules->next;
     }
   }
 
   return reverse(final);
 }
 
-void solver_prettyPrint(bool_conj* exprs) {
+void solver_prettyPrint(conj* exprs) {
   while (exprs != NULL) {
-    bool_disj* disj = exprs->exp;
+    disj* disj = exprs->exp;
     while (disj != NULL) {
       constraints_printOp(&disj->option);
       printf("%s", disj->pkg->name);
@@ -207,12 +278,12 @@ void solver_prettyPrint(bool_conj* exprs) {
   }
 }
 
-void solver_freeExpList(bool_conj* list) {
+void solver_freeExpList(conj* list) {
   while (list != NULL) {
-    bool_conj* nxt = list->next;
-    bool_disj* exp = list->exp;
+    conj* nxt = list->next;
+    disj* exp = list->exp;
     while(exp != NULL) {
-      bool_disj* nxt = exp->next;
+      disj* nxt = exp->next;
       free(exp);
       exp = nxt;
     }

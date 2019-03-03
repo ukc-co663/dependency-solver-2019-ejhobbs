@@ -18,20 +18,23 @@ int main(int argc, char** argv) {
   constraint_list* inputConstraints = constraints_getFromFile(argv[_constraints]);
 
   if (inputConstraints == NULL) {
+    /* no constraints, nothing to do! */
     printf("[]\n");
     exit(0);
   }
 
-  bool_conj* rules = solver_getRules(&repo, inputConstraints);
+  conj* rules = solver_getRules(&repo, inputConstraints);
 
-  constraint_list* outputConstraints = solver_getConstraints(&repo, rules);
+//  solver_prettyPrint(rules);
+//  printf("\n-----\n");
+
+  constraint_list* outputConstraints = solver_getConstraints(&repo, &inputState, rules);
   /*
   if(result == 0) {
     fprintf(stderr, "Unable to satisfy given constraints, exiting\n");
     exit(1);
   }*/
 
- // solver_prettyPrint(rules);
   constraints_prettyPrint(outputConstraints);
 
   solver_freeExpList(rules);

@@ -46,7 +46,7 @@ char charToOp(char* c) {
 }
 
 constraint parseConstraint(char *c) {
-    constraint result;
+    constraint result = {0};
     result.op = charToOp(c);
     result.pkg = parseRelation(c+1); /* Constraints consist of +/- then a package then eq then version */
     return result;

@@ -24,7 +24,9 @@ conj* solver_getRules(repository* repo, constraint_list* cs) {
     if (!(c.op & N_DEPEND) || cPkg->cConflicts != 0 || cPkg->depends != 0) {
       /* Create rule for this package */
       conj* newRules = calloc(1, sizeof(*newRules));
-      newRules->exp = newExpression(c.op, cPkg);
+      disj* thisExpr = newExpression(c.op, cPkg);
+      thisExpr->rel = c.pkg;
+      newRules->exp = thisExpr;
       newRules->next = rules;
       rules = newRules;
 
@@ -47,6 +49,7 @@ conj* solver_getRules(repository* repo, constraint_list* cs) {
 
                   disj* newExp = newExpression(N_INSTALL | N_DEPEND, thisPkg);
                   newExp->next = thisGrp;
+                  newExp->rel = deps->relations[j];
                   thisGrp = newExp;
                 }
 
@@ -65,6 +68,7 @@ conj* solver_getRules(repository* repo, constraint_list* cs) {
             if (thisGrp != NULL) {
               disj* orNotThis = newExpression(N_REMOVE | N_DEPEND, cPkg);
               orNotThis->next = thisGrp;
+              orNotThis->rel = c.pkg;
               thisGrp = orNotThis;
 
               conj* newRules = calloc(1, sizeof(*newRules));
@@ -76,14 +80,10 @@ conj* solver_getRules(repository* repo, constraint_list* cs) {
           }
           /* add each conflict as -constraint*/
           for (int i = 0; i < cPkg->cConflicts; i++) {
-            int idx = repo_getPackageIndex(repo, &cPkg->conflicts[i]);
-            package* thisConflict = repo->packages[idx];
             if(idx >= 0) {
-              thisConflict->seen |= N_REMOVE | N_DEPEND;
-
-              disj* notThis = newExpression(N_REMOVE | N_DEPEND, thisConflict);
-              notThis->next = newExpression(N_REMOVE, cPkg);
+              disj* notThis = newExpression(N_REMOVE | N_DEPEND, NULL);
               notThis->rel = cPkg->conflicts[i];
+              notThis->next = NULL;
 
               conj* newRule = calloc(1, sizeof(*newRule));
               newRule->processed = 0;
@@ -230,6 +230,15 @@ int findAndRemoveDuplicate(conj* rules) {
   return status;
 }
 
+/**
+ * When we have an uninstall command, there are two options:
+ * a) the package is not installed, and so we don't care about it
+ * b) the package is installed, and we must remove it.
+ * In the second case, however, we don't know which package is actually installed,
+ * since building the rules we don't store the package itself. Instead, we just
+ * keep the relation, and work out if anything installed satisfies that constraint
+ * and therefore needs removing.
+ */
 int tidyUninstalls(repository* repo, conj* r, states* s) {
   int status = -1;
   conj* thisRule = r;
@@ -240,7 +249,8 @@ int tidyUninstalls(repository* repo, conj* r, states* s) {
       state_member* thisMember = s->members;
       int found = 0;
       while(thisMember != NULL) {
-        if (relation_satisfiedByVersion(&thisMember->rel.version, &thisExpr->rel)){
+        if (strcmp(thisMember->rel.name, thisExpr->rel.name) == 0
+            && relation_satisfiedByVersion(&thisMember->rel.version, &thisExpr->rel)){
           found = -1;
           disj* removeThis = calloc(1, sizeof(*removeThis));
           removeThis->next = thisExpr->next;
@@ -288,8 +298,6 @@ constraint_list* solver_getConstraints(repository* repo, states* currentState, c
       //solver_prettyPrint(rules);
     while (fixUninstall != -1) {
       fixUninstall = tidyUninstalls(repo, rules, currentState);
-      //printf("\n----------\n");
-      //solver_prettyPrint(rules);
     }
     while (rules != NULL) {
       disj* minExpr = getMinimum(rules->exp);
@@ -306,15 +314,22 @@ constraint_list* solver_getConstraints(repository* repo, states* currentState, c
 
 void solver_prettyPrint(conj* exprs) {
   while (exprs != NULL) {
-    disj* disj = exprs->exp;
-    while (disj != NULL) {
-      constraints_printOp(&disj->option);
-      printf("%s", disj->pkg->name);
-      printf("(");
-      version_prettyPrint(&disj->pkg->version);
-      printf(")");
-      if(disj->next != NULL) { printf(" v "); }
-      disj = disj->next;
+    disj* thisDisj = exprs->exp;
+    while (thisDisj != NULL) {
+      constraints_printOp(&thisDisj->option);
+      if (thisDisj->pkg == NULL) {
+        printf("%s", thisDisj->rel.name);
+        printf("(");
+        relation_prettyPrint(&thisDisj->rel);
+        printf(")");
+      } else {
+        printf("%s", thisDisj->pkg->name);
+        printf("(");
+        version_prettyPrint(&thisDisj->pkg->version);
+        printf(")");
+      }
+      if(thisDisj->next != NULL) { printf(" v "); }
+      thisDisj = thisDisj->next;
     }
     printf("\n");
     exprs = exprs->next;

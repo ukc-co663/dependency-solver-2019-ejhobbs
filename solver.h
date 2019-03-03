@@ -15,6 +15,7 @@ typedef struct d_path {
 typedef struct node {
   relation rel; /* what packages are we allowed */
   int pkg; /* what have we chosen currently (index into repo) */
+  int numDepends;
   d_path* dependencies; /* Each dependency this package lists */
   struct node** followers; /* following nodes (per dependency) */
 } node;
@@ -23,10 +24,11 @@ typedef struct node {
  * We could have used relation_group here, but since this is going to
  * be changing a lot it's better to have it as a linked list instead
  */
-typedef struct disallowed {
+typedef struct dep_list {
+  int src; /* package where this came from */
   relation rel; /* thing we CAN'T have */
-  struct disallowed* next;
-} disallowed;
+  struct dep_list* next;
+} dep_list;
 
 /**
  * Root node for our dependency graph. This will be passed around
@@ -34,7 +36,7 @@ typedef struct disallowed {
  */
 typedef struct option {
   node* route;
-  struct disallowed* disallowed; /* things we're not allowed to install */
+  dep_list* disallowed; /* things we're not allowed to install */
 } option;
 
 option solver_getRoute(const repository*, const constraint*);

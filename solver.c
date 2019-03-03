@@ -6,7 +6,7 @@ constraint* list_append(constraint* l, constraint* r) {
   return r;
 }
 
-disallowed* dis_append(disallowed* l, disallowed* r) {
+dep_list* dis_append(dep_list* l, dep_list* r) {
   if (l == NULL) return r;
   r->next = l;
   return r;
@@ -27,16 +27,24 @@ constraint* maybeRemove(const states* s, relation* rel) {
   return c;
 }
 
-
 option solver_getRoute(const repository* repo, const constraint* cs) {
   node* startNode = NULL;
-  disallowed* theseDisallowed = NULL;
+  dep_list* theseDisallowed = NULL;
   const constraint* thisCons = cs;
   while (thisCons != NULL) {
     if(thisCons->op & N_REMOVE) {
-      disallowed* thisDisallowed = calloc(1, sizeof(*thisDisallowed));
+      dep_list* thisDisallowed = calloc(1, sizeof(*thisDisallowed));
       thisDisallowed->rel = thisCons->pkg;
       theseDisallowed = dis_append(theseDisallowed, thisDisallowed);
+    } else {
+      // find first matching pkg
+      // add its conflicts to disallowed (need to keep hold of them to remove later)
+      // for each dependency group, pick the first. Recurse with each.
+      // If conflict found, backtrack to choice that caused it.
+      // error detection:
+      // each pkg, check against disallowed. If any match, try the next best.
+      // on backtrack, remove each set of conflicts from disallowed.
+      // it's fine to have duplicates in conflicts. makes life easier.
     }
     thisCons = thisCons->next;
   }
@@ -48,7 +56,7 @@ constraint* solver_getConstraints(const repository* repo, const states* state, c
   /* Make sure any disallowed are uninstalled FIRST. This ensures that
    * there can be no conflicts before we start installing
    */
-  disallowed* thisConflict = rules->disallowed;
+  dep_list* thisConflict = rules->disallowed;
   while (thisConflict != NULL) {
     constraint* rm = maybeRemove(state, &thisConflict->rel);
     if (rm != NULL) {
@@ -57,6 +65,7 @@ constraint* solver_getConstraints(const repository* repo, const states* state, c
     thisConflict = thisConflict->next;
   }
   /* Now we can traverse each of the nodes and install the packages */
+  //TODO: traversal
 
   return final;
 }

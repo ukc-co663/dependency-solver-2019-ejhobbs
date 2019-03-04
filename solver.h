@@ -20,6 +20,12 @@ typedef struct node {
   struct node** followers; /* following nodes (per dependency) */
 } node;
 
+typedef struct node_list {
+  node pkg;
+  struct node_list* next;
+} node_list;
+
+
 /**
  * We could have used relation_group here, but since this is going to
  * be changing a lot it's better to have it as a linked list instead
@@ -35,7 +41,7 @@ typedef struct dep_list {
  * and contains the route, and the things we have to avoid
  */
 typedef struct option {
-  node* route;
+  node_list* route;
   dep_list* disallowed; /* things we're not allowed to install */
 } option;
 

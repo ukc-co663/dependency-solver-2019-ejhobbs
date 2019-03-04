@@ -45,5 +45,5 @@ typedef struct option {
   dep_list* disallowed; /* things we're not allowed to install */
 } option;
 
-option solver_getRoute(const repository*, const constraint*);
+option solver_getRoute(const states*, const repository*, const constraint*);
 constraint* solver_getConstraints(const repository*, const states*, const option*);

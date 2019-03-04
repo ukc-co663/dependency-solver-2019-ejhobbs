@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  option rules = solver_getRoute(&repo, inputConstraints.cons);
+  option rules = solver_getRoute(&inputState, &repo, inputConstraints.cons);
 
   constraint* outputConstraints = solver_getConstraints(&repo, &inputState, &rules);
   constraints_prettyPrint(outputConstraints);

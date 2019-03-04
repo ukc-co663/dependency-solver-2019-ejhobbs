@@ -41,7 +41,7 @@ constraint* install(const repository* repo, int idx) {
   return c;
 }
 
-int install_package(const repository* repo, const constraint* c, node_list* start, node_list* this, dep_list* blocked) {
+int install_package(const states* s, const repository* repo, const constraint* c, node_list* start, node_list* this, dep_list* blocked) {
   // add its conflicts to disallowed (need to keep hold of them to remove later)
   // for each dependency group, pick the first. Recurse with each.
   // If conflict found, backtrack to choice that caused it.
@@ -49,13 +49,34 @@ int install_package(const repository* repo, const constraint* c, node_list* star
   // each pkg, check against disallowed. If any match, try the next best.
   // on backtrack, remove each set of conflicts from disallowed.
   // it's fine to have duplicates in conflicts. makes life easier.
-  //TODO
+  /* add this package to list */
+  /* check conflicts off the bat */
+  int match = 0;
   int idx = repo_getPackageIndex(repo, &c->pkg);
+  while (idx != 1 && match == 0) {
+    /* Check first to see if we can get away with not
+     * installing a package if there are already
+     * conflicts with a different version
+     */
+    constraint* found = NULL;
+    package* p = repo->packages[idx];
+    for (int i = 0; i < p->cConflicts; i++) {
+      relation rel = p->conflicts[i];
+      constraint* installed = maybeRemove(s, &rel);
+      found = list_append(found, installed);
+    }
+    if (found != NULL) {
+      idx = repo_getPackageFromIndex(repo, &c->pkg, idx+1);
+    } else {
+      match = 1;
+    }
+  }
+  if (idx == -1) idx = repo_getPackageIndex(repo, &c->pkg);
   this->pkg = (node){c->pkg, idx, 0, NULL, NULL};
   return 0;
 }
 
-option solver_getRoute(const repository* repo, const constraint* cs) {
+option solver_getRoute(const states* s, const repository* repo, const constraint* cs) {
   node_list* startNode = NULL;
   dep_list* theseDisallowed = NULL;
   const constraint* thisCons = cs;
@@ -66,7 +87,7 @@ option solver_getRoute(const repository* repo, const constraint* cs) {
       theseDisallowed = dis_append(theseDisallowed, thisDisallowed);
     } else {
       node_list* new = calloc(1, sizeof(*new));
-      install_package(repo, thisCons, startNode, new, theseDisallowed);
+      install_package(s, repo, thisCons, startNode, new, theseDisallowed);
       startNode = nl_append(startNode, new);
     }
     thisCons = thisCons->next;

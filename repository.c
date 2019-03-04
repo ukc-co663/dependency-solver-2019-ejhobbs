@@ -134,10 +134,10 @@ int satisfiesConstraint(const repository* r, relation* rl, int i) {
  * stretch, but it does guarantee that we will always get the minimal cost
  * package for a given constraint
  */
-int repo_getPackageIndex(const repository* r, relation* rl) {
+int repo_getPackageIndex(const repository* r, const relation* rl) {
   return repo_getPackageFromIndex(r, rl, 0);
 }
-int repo_getPackageFromIndex(const repository *repo, relation* r, int idx) {
+int repo_getPackageFromIndex(const repository *repo, const relation* r, int idx) {
   int max = repo->size;
 
   /* Increase until we find a matching name */

@@ -26,7 +26,7 @@ typedef struct repository {
 
 repository repo_getFromFile(const char*);
 repository repo_getAll(const cJSON *);
-int repo_getPackageIndex(const repository *, relation*);
-int repo_getPackageFromIndex(const repository*, relation*, int);
+int repo_getPackageIndex(const repository *, const relation*);
+int repo_getPackageFromIndex(const repository*, const relation*, int);
 void repo_freeAll(repository*);
 #endif

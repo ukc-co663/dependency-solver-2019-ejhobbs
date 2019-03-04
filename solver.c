@@ -1,7 +1,7 @@
 #include "solver.h"
 
 /* these are all actually prepends */
-node_list* nl_append(node_list* l, node_list* r) {
+node* nl_append(node* l, node* r) {
   if (l == NULL) return r;
   r->next = l;
   return r;
@@ -42,42 +42,61 @@ constraint* install(const repository* repo, int idx) {
   return c;
 }
 
-int install_package(const states* s, const repository* repo, const constraint* c, node_list* start, node_list* this, dep_list* blocked) {
-  int status = 0;
-  // for each dependency group, pick the first. Recurse with each.
-  // If conflict found, backtrack to choice that caused it.
-  // error detection:
-  // each pkg, check against disallowed. If any match, try the next best.
-  // on backtrack, remove each set of conflicts from disallowed.
-  // it's fine to have duplicates in conflicts. makes life easier.
+dep_list* formatConflicts(const repository* r, int idx) {
+  package* chosen = r->packages[idx];
+  int numConflicts = chosen->cConflicts;
+  dep_list* conflicts = NULL;
+  if (numConflicts > 0) {
+    for (int i = 0; i < numConflicts; i++) {
+      dep_list* thisConflict = calloc(1, sizeof(*thisConflict));
+      thisConflict->src = idx;
+      thisConflict->rel = chosen->conflicts[i];
+      thisConflict->next = conflicts;
+      conflicts = thisConflict;
+    }
+  }
+  return conflicts;
+}
 
-  /* Check first to see if we can get away with not
-   * installing a package if there are already
-   * conflicts with a different version
+d_path* formatDependencies(const repository* r, int idx) {
+    package* chosen = r->packages[idx];
+    int dependencyCount = chosen->cDepends;
+    d_path* depends = NULL;
+    if (dependencyCount > 0) {
+      depends = calloc(dependencyCount, sizeof(*depends));
+      for (int i = 0; i < dependencyCount; i++) {
+        relation_group thisPath = chosen->depends[i];
+        depends[i].options = thisPath.relations;
+        depends[i].size = thisPath.size;
+        depends[i].cur = 0;
+      }
+    }
+    return depends;
+}
+
+int install_package(const states* s, const repository* repo, const constraint* c, node* start, node* this, dep_list* blocked) {
+  int status = 0;
+  /* Try to find a copy of the constraint that doesn't require
+   * us to uninstall something right off the bat. This
+   * should reduce the cost a bit in the long run.
    */
   int match = 0;
   int idx = repo_getPackageIndex(repo, &c->pkg);
   dep_list* cons = NULL;
-  while (idx != 1 && match == 0) {
-    constraint* found = NULL;
-    cons = NULL;
+  while (idx != -1 && match == 0) {
+    int found = 0;
     package* p = repo->packages[idx];
     for (int i = 0; i < p->cConflicts; i++) {
       relation rel = p->conflicts[i];
       constraint* installed = maybeRemove(s, &rel);
-      dep_list* thisConflict = calloc(1, sizeof(*thisConflict));
-      thisConflict->src = idx;
-      thisConflict->rel = rel;
-      found = list_append(found, installed);
-      cons = dis_append(cons, thisConflict);
-    }
-    if (found != NULL) {
-      idx = repo_getPackageFromIndex(repo, &c->pkg, idx+1);
-      while (cons != NULL) {
-        dep_list* nxt = cons->next;
-        free(cons);
-        cons = nxt;
+      if (installed != NULL) {
+        free(installed);
+        found = 1;
+        break;
       }
+    }
+    if (found != 0) {
+      idx = repo_getPackageFromIndex(repo, &c->pkg, idx+1);
     } else {
       match = 1;
     }
@@ -106,59 +125,111 @@ int install_package(const states* s, const repository* repo, const constraint* c
       status |= _add_conflicts;
     }
     /* Deal with dependencies */
-    package* chosen = repo->packages[idx];
-    int dependencyCount = chosen->cDepends;
-    d_path* depends = NULL;
-    if (dependencyCount > 0) {
-      depends = calloc(dependencyCount, sizeof(*depends));
-      for (int i = 0; i < dependencyCount; i++) {
-        relation_group thisPath = chosen->depends[i];
-        depends[i].options = thisPath.relations;
-        depends[i].cur = 0;
-      }
-    }
-    this->pkg = (node){-1, c->pkg, idx, dependencyCount, depends};
+    d_path* depends = formatDependencies(repo, idx);
+    this->src = -1;
+    this->rel = c->pkg;
+    this->pkg = idx;
+    this->numDepends = repo->packages[idx]->cDepends;
+    this->dependencies = depends;
   }
   return status;
 }
 
+int isBlocked(dep_list* bs, relation* rel) {
+  dep_list* tb = bs;
+  while (tb != NULL) {
+    if(strcmp(tb->rel.name, rel->name) == 0 && relation_satisfiedByVersion(&tb->rel.version, rel)) {
+      return 1;
+    }
+    tb = tb->next;
+  }
+  return 0;
+}
+
+option resolveDepends(const states* s, const repository* r, node* start, dep_list* block){
+  if (start->numDepends != 0) {
+    int set = 0;
+    while (set < start->numDepends) {
+      d_path thisPath = start->dependencies[set];
+      relation tryRel = thisPath.options[thisPath.cur];
+      if (isBlocked(block, &tryRel)) {
+        if (thisPath.cur++ >= thisPath.size) {
+          return (option) {NULL, NULL}; //tell previous call we cannot satisfy some dependency
+        }
+      } else {
+        int idx = repo_getPackageIndex(r, &tryRel);
+        node* dep = calloc(1, sizeof(*dep));
+        d_path* subdeps = formatDependencies(r, idx);
+        dep->src = start->pkg;
+        dep->rel = tryRel;
+        dep->pkg = idx;
+        dep->numDepends = r->packages[idx]->cDepends;
+        dep->dependencies = subdeps;
+        dep->next = start->next; // insert out package afterward
+        start->next = dep;
+        dep_list* subconflicts = formatConflicts(r, idx);
+        block = dis_append(block, subconflicts);
+        set++; //try next set
+      }
+    }
+  }
+  if (start->next == NULL) {
+    return (option) {start, block};
+  } else {
+    option nxt = resolveDepends(s, r, start->next, block);
+    if (nxt.route == NULL) {
+      //something went wrong, try again
+      // also need to tidy up here first.
+      if(block != NULL) block->next = NULL; /* unblock things we chose */
+      /* also need to remove the dependencies we added */
+      return resolveDepends(s, r, start, block);
+    } else {
+      return (option) {start, block};
+    }
+  }
+}
+
 option solver_getRoute(const states* s, const repository* repo, const constraint* cs) {
-  node_list* startNode = NULL;
-  dep_list* theseDisallowed = NULL;
+  node* startNode = NULL;
+  dep_list* blocked = NULL;
   const constraint* thisCons = cs;
   while (thisCons != NULL) {
     if(thisCons->op & N_REMOVE) {
       dep_list* thisDisallowed = calloc(1, sizeof(*thisDisallowed));
-      thisDisallowed->rel = thisCons->pkg;
-      theseDisallowed = dis_append(theseDisallowed, thisDisallowed);
+      if (thisDisallowed != NULL) {
+        thisDisallowed->rel = thisCons->pkg;
+        blocked = dis_append(blocked, thisDisallowed);
+      }
     } else {
-      node_list* new = calloc(1, sizeof(*new));
+      node* new = calloc(1, sizeof(*new));
       dep_list* block = calloc(1, sizeof(*block));
       int status = install_package(s, repo, thisCons, startNode, new, block);
-      if (status & _add_missing) {
-        free(new);
-        free(block);
+      startNode = nl_append(startNode, new);
+      if (status & _add_conflicts) {
+        blocked = dis_append(blocked, block);
       } else {
-        if (status & _add_conflicts) {
-          theseDisallowed = dis_append(theseDisallowed, block);
-        } else {
-          free(block);
-        }
-        startNode = nl_append(startNode, new);
+        free(block);
       }
+        // for each dependency group, pick the first. Recurse with each.
+        // If conflict found, backtrack to choice that caused it.
+        // error detection:
+        // each pkg, check against disallowed. If any match, try the next best.
+        // on backtrack, remove each set of conflicts from disallowed.
+        // it's fine to have duplicates in conflicts. makes life easier.
     }
     thisCons = thisCons->next;
   }
-  return (option){startNode, theseDisallowed};
+
+  option resolvedDependencies = resolveDepends(s, repo, startNode, blocked);
+  return resolvedDependencies;
 }
 
 
 constraint* solver_getConstraints(const repository* repo, const states* state, const option* rules) {
   constraint* final = NULL;
-  //TODO: traversal
-  node_list* toInstall = rules->route;
+  node* toInstall = rules->route;
   while(toInstall != NULL) {
-    constraint* ins = install(repo, toInstall->pkg.pkg);
+    constraint* ins = install(repo, toInstall->pkg);
     final = list_append(final, ins);
     toInstall = toInstall->next;
   }

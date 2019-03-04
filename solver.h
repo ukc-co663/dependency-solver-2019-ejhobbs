@@ -3,14 +3,16 @@
 #include "constraints.h"
 #include "relation.h"
 
-#define _add_conflicts 1
-#define _add_missing 2
+#define _add_conflicts  1
+#define _add_missing    2
+#define _add_depends    4
 /**
  * For storing dependencies, contains the options that we have
  * as well as the current 'best guess'.
  */
 typedef struct d_path {
   int cur; /* which is our current guess */
+  int size;
   relation* options; /* options we can choose */
 } d_path;
 
@@ -20,13 +22,9 @@ typedef struct node {
   int pkg; /* what have we chosen currently (index into repo) */
   int numDepends;
   d_path* dependencies; /* Each dependency this package lists */
+  struct node* next;
+  int satisfied;
 } node;
-
-typedef struct node_list {
-  node pkg;
-  struct node_list* next;
-} node_list;
-
 
 /**
  * We could have used relation_group here, but since this is going to
@@ -43,7 +41,7 @@ typedef struct dep_list {
  * and contains the route, and the things we have to avoid
  */
 typedef struct option {
-  node_list* route;
+  node* route;
   dep_list* disallowed; /* things we're not allowed to install */
 } option;
 

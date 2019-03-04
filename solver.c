@@ -242,7 +242,26 @@ option solver_getRoute(const states *s, const repository *repo,
   }
 
   return resolveDepends(s, repo, startNode, blocked);
-  ;
+}
+
+node* remove_duplicates(node* n, int pkg) {
+  //Wrong, have to go the other way around :s
+  node* nc = n;
+  node* prev = NULL;
+  while( nc != NULL) {
+    if (nc->pkg == pkg) {
+      if (prev != NULL) {
+        prev->next = nc->next;
+        nc = nc->next;
+      } else {
+        nc = nc->next;
+      }
+    } else {
+      prev = nc;
+      nc = nc->next;
+    }
+  }
+  return n;
 }
 
 constraint *solver_getConstraints(const repository *repo, const states *state,
@@ -253,7 +272,7 @@ constraint *solver_getConstraints(const repository *repo, const states *state,
     constraint *ins = install(repo, toInstall->pkg);
     final = list_append(final, ins);
     // TODO ignore duplicates
-    toInstall = toInstall->next;
+    toInstall = toInstall->next; //remove_duplicates(toInstall->next, toInstall->pkg);
   }
 
   /* Make sure any disallowed are uninstalled first. This ensures that

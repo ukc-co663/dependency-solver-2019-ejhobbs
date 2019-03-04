@@ -4,8 +4,9 @@
 node *nl_append(node *l, node *r) {
   if (l == NULL)
     return r;
-  node* tmp = r;
-  while(tmp->next != NULL) tmp = tmp->next;
+  node *tmp = r;
+  while (tmp->next != NULL)
+    tmp = tmp->next;
   tmp->next = l;
   return r;
 }
@@ -13,8 +14,9 @@ node *nl_append(node *l, node *r) {
 constraint *list_append(constraint *l, constraint *r) {
   if (l == NULL)
     return r;
-  constraint* tmp = r;
-  while(tmp->next != NULL) tmp = tmp->next;
+  constraint *tmp = r;
+  while (tmp->next != NULL)
+    tmp = tmp->next;
   tmp->next = l;
   return r;
 }
@@ -22,8 +24,9 @@ constraint *list_append(constraint *l, constraint *r) {
 dep_list *dis_append(dep_list *l, dep_list *r) {
   if (l == NULL)
     return r;
-  dep_list* tmp = r;
-  while(tmp->next != NULL) tmp = tmp->next;
+  dep_list *tmp = r;
+  while (tmp->next != NULL)
+    tmp = tmp->next;
   tmp->next = l;
   return r;
 }
@@ -238,7 +241,8 @@ option solver_getRoute(const states *s, const repository *repo,
     thisCons = thisCons->next;
   }
 
-  return resolveDepends(s, repo, startNode, blocked);;
+  return resolveDepends(s, repo, startNode, blocked);
+  ;
 }
 
 constraint *solver_getConstraints(const repository *repo, const states *state,
@@ -248,7 +252,7 @@ constraint *solver_getConstraints(const repository *repo, const states *state,
   while (toInstall != NULL) {
     constraint *ins = install(repo, toInstall->pkg);
     final = list_append(final, ins);
-    //TODO ignore duplicates
+    // TODO ignore duplicates
     toInstall = toInstall->next;
   }
 

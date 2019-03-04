@@ -3,6 +3,8 @@
 #include "constraints.h"
 #include "relation.h"
 
+#define _add_conflicts 1
+#define _add_missing 2
 /**
  * For storing dependencies, contains the options that we have
  * as well as the current 'best guess'.
@@ -13,11 +15,11 @@ typedef struct d_path {
 } d_path;
 
 typedef struct node {
+  int src; /* -1 for root, idx for dependency */
   relation rel; /* what packages are we allowed */
   int pkg; /* what have we chosen currently (index into repo) */
   int numDepends;
   d_path* dependencies; /* Each dependency this package lists */
-  struct node** followers; /* following nodes (per dependency) */
 } node;
 
 typedef struct node_list {

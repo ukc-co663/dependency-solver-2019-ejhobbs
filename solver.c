@@ -323,6 +323,7 @@ constraint *solver_getConstraints(const repository *repo, const states *state,
     // TODO ignore duplicates
     toInstall = remove_duplicates(toInstall->next, toInstall->pkg);
   }
+  cons_reverse(&final);
 
   /* Make sure any disallowed are uninstalled first. This ensures that
    * there can be no conflicts before we start installing. Since this
@@ -336,6 +337,5 @@ constraint *solver_getConstraints(const repository *repo, const states *state,
     }
     thisConflict = thisConflict->next;
   }
-  cons_reverse(&final);
   return final;
 }

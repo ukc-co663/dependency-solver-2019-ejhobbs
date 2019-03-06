@@ -162,20 +162,40 @@ int isBlocked(dep_list *bs, relation *rel) {
   return 0;
 }
 
+void remove_from_src(node* n, int pkg) {
+  node* nc = n;
+  node* np = NULL;
+  while (nc != NULL) {
+    if(nc->src == pkg) {
+      if (np != NULL) {
+        np->next = nc->next;
+      } else {
+        *np = *np->next;
+      }
+    } else {
+      np = nc;
+      nc = nc->next;
+    }
+  }
+}
 option resolveDepends(const states *s, const repository *r, node *start,
                       dep_list *block) {
   if (start != NULL) {
-    if (start->numDepends != 0) {
+    if (start->numDepends >= 0) {
       int set = 0;
       while (set < start->numDepends) {
         d_path thisPath = start->dependencies[set];
         relation tryRel = thisPath.options[thisPath.cur];
         if (isBlocked(block, &tryRel)) {
-          if (thisPath.cur++ >= thisPath.size) {
+          thisPath.cur += 1;
+          if (thisPath.cur >= thisPath.size) {
+            thisPath.cur = 0; //when we get back here we should start again
+            remove_from_src(start, start->pkg); /* may have already tried to install something */
             return (option){
                 NULL,
                 NULL}; // tell previous call we cannot satisfy some dependency
           }
+          //->continue
         } else {
           int idx = repo_getPackageIndex(r, &tryRel);
           node *dep = calloc(1, sizeof(*dep));
@@ -198,10 +218,10 @@ option resolveDepends(const states *s, const repository *r, node *start,
       option nxt = resolveDepends(s, r, start->next, block);
       if (nxt.route == NULL) {
         // something went wrong, try again
-        // also need to tidy up here first.
         if (block != NULL)
           block->next = NULL; /* unblock things we chose */
         /* also need to remove the dependencies we added */
+        remove_from_src(start, start->pkg);
         return resolveDepends(s, r, start, block);
       }
     }
@@ -245,7 +265,6 @@ option solver_getRoute(const states *s, const repository *repo,
 }
 
 node* remove_duplicates(node* n, int pkg) {
-  //Wrong, have to go the other way around :s
   node* nc = n;
   node* prev = NULL;
   while( nc != NULL) {
@@ -264,15 +283,45 @@ node* remove_duplicates(node* n, int pkg) {
   return n;
 }
 
+void node_reverse(node** n) {
+  node* prev = NULL;
+  node* cur = *n;
+  while (cur != NULL) {
+    node* nxt = cur->next;
+    cur->next = prev;
+    prev = cur;
+    cur = nxt;
+  }
+  *n = prev;
+}
+
+void cons_reverse(constraint** n) {
+  constraint* prev = NULL;
+  constraint* cur = *n;
+  while (cur != NULL) {
+    constraint* nxt = cur->next;
+    cur->next = prev;
+    prev = cur;
+    cur = nxt;
+  }
+  *n = prev;
+}
+
 constraint *solver_getConstraints(const repository *repo, const states *state,
                                   const option *rules) {
+  //at this point, our rules are in the correct order to read out "backwards", ie
+  //when we print the constraints top down they'll end up with dependencies in the
+  //correct order. However, in removing duplicates we want to keep the last instance
+  //so it will be installed FIRST. This requires that we reverse the rules, and then
+  //reverse the constraints again at the end
   constraint *final = NULL;
   node *toInstall = rules->route;
+  node_reverse(&toInstall);
   while (toInstall != NULL) {
     constraint *ins = install(repo, toInstall->pkg);
     final = list_append(final, ins);
     // TODO ignore duplicates
-    toInstall = toInstall->next; //remove_duplicates(toInstall->next, toInstall->pkg);
+    toInstall = remove_duplicates(toInstall->next, toInstall->pkg);
   }
 
   /* Make sure any disallowed are uninstalled first. This ensures that
@@ -287,5 +336,6 @@ constraint *solver_getConstraints(const repository *repo, const states *state,
     }
     thisConflict = thisConflict->next;
   }
+  cons_reverse(&final);
   return final;
 }

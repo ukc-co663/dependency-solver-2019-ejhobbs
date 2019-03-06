@@ -264,8 +264,8 @@ option solver_getRoute(const states *s, const repository *repo,
   return resolveDepends(s, repo, startNode, blocked);
 }
 
-node* remove_duplicates(node* n, int pkg) {
-  node* nc = n;
+void remove_duplicates(node** n, int pkg) {
+  node* nc = *n;
   node* prev = NULL;
   while( nc != NULL) {
     if (nc->pkg == pkg) {
@@ -273,14 +273,15 @@ node* remove_duplicates(node* n, int pkg) {
         prev->next = nc->next;
         nc = nc->next;
       } else {
-        nc = nc->next;
+        if(nc->next != NULL) {
+          *nc = *nc->next;
+        }
       }
     } else {
       prev = nc;
       nc = nc->next;
     }
   }
-  return n;
 }
 
 void node_reverse(node** n) {
@@ -320,8 +321,8 @@ constraint *solver_getConstraints(const repository *repo, const states *state,
   while (toInstall != NULL) {
     constraint *ins = install(repo, toInstall->pkg);
     final = list_append(final, ins);
-    // TODO ignore duplicates
-    toInstall = remove_duplicates(toInstall->next, toInstall->pkg);
+    remove_duplicates(&toInstall->next, toInstall->pkg);
+    toInstall = toInstall->next;
   }
   cons_reverse(&final);
 

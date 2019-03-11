@@ -124,7 +124,6 @@ int install_package(const states *s, const repository *repo,
       status |= _add_missing;
     } else {
       package *p = repo->packages[idx];
-      p->seen = 1;
       for (int i = 0; i < p->cConflicts; i++) {
         relation rel = p->conflicts[i];
         dep_list *thisConflict = calloc(1, sizeof(*thisConflict));
@@ -199,22 +198,18 @@ option resolveDepends(const states *s, const repository *r, node *start,
           //->continue
         } else {
           int idx = repo_getPackageIndex(r, &tryRel);
-          package* p = r->packages[idx];
-          if (p->seen != 1) {
-            p->seen = 1;
-            node *dep = calloc(1, sizeof(*dep));
-            d_path *subdeps = formatDependencies(r, idx);
-            dep->src = start->pkg;
-            dep->rel = tryRel;
-            dep->pkg = idx;
-            dep->numDepends = r->packages[idx]->cDepends;
-            dep->dependencies = subdeps;
-            dep->next = start->next; // insert out package afterward
-            start->next = dep;
-            dep_list *subconflicts = formatConflicts(r, idx);
-            if (subconflicts != NULL)
-              block = dis_append(block, subconflicts);
-          }
+          node *dep = calloc(1, sizeof(*dep));
+          d_path *subdeps = formatDependencies(r, idx);
+          dep->src = start->pkg;
+          dep->rel = tryRel;
+          dep->pkg = idx;
+          dep->numDepends = r->packages[idx]->cDepends;
+          dep->dependencies = subdeps;
+          dep->next = start->next; // insert out package afterward
+          start->next = dep;
+          dep_list *subconflicts = formatConflicts(r, idx);
+          if (subconflicts != NULL)
+            block = dis_append(block, subconflicts);
           set++; // try next set
         }
       }

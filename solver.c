@@ -162,71 +162,117 @@ int isBlocked(dep_list *bs, relation *rel) {
   return 0;
 }
 
-void remove_from_src(node* n, int pkg) {
-  node* nc = n;
-  node* np = NULL;
-  while (nc != NULL) {
-    if(nc->src == pkg) {
-      if (np != NULL) {
-        np->next = nc->next;
-      } else {
-        *np = *np->next;
-      }
-    } else {
-      np = nc;
-      nc = nc->next;
+void remove_block_node(dep_list** h, dep_list* rm) {
+  if( *h != NULL && rm != NULL) {
+    if (*h == rm) {
+      *h = rm->next;
+    }
+    dep_list* tmp = *h;
+    while(tmp != NULL && tmp->next != rm) tmp = tmp->next;
+    if(tmp != NULL) {
+      tmp->next = tmp->next->next;
+      free(rm);
     }
   }
 }
+
+void remove_node(node** h, node* rm) {
+  if( *h != NULL && rm != NULL) {
+    if (*h == rm) {
+      *h = rm->next;
+    }
+    node* tmp = *h;
+    while(tmp != NULL && tmp->next != rm) tmp = tmp->next;
+    if(tmp != NULL) {
+      tmp->next = tmp->next->next;
+      free(rm);
+    }
+  }
+}
+
+void remove_from_src(node** n, int pkg) {
+  node* nc = *n;
+  while (nc != NULL) {
+    node* nxt = nc->next;
+    if (nc->src == pkg){
+      remove_node(n, nc);
+    }
+    nc = nxt;
+  }
+}
+
+void remove_block_from_src(dep_list** n, int pkg) {
+  dep_list* nc = *n;
+  while (nc != NULL) {
+    dep_list* nxt = nc->next;
+    if (nc->src == pkg){
+      remove_block_node(n, nc);
+    }
+    nc = nxt;
+  }
+}
+
+int findCycle(node* n, int pkg) {
+  while (n != NULL) {
+    if (n->pkg == pkg && n->src == -1) {
+      return 1;
+    }
+    n = n->next;
+  }
+  return 0;
+}
+
 option resolveDepends(const states *s, const repository *r, node *start,
-                      dep_list *block) {
+                      node *all, dep_list *block) {
   if (start != NULL) {
-    if (start->numDepends >= 0) {
+    if (start->numDepends > 0) {
       int set = 0;
       while (set < start->numDepends) {
-        d_path thisPath = start->dependencies[set];
-        relation tryRel = thisPath.options[thisPath.cur];
-        if (isBlocked(block, &tryRel)) {
-          thisPath.cur += 1;
-          if (thisPath.cur >= thisPath.size) {
-            thisPath.cur = 0; //when we get back here we should start again
-            remove_from_src(start, start->pkg); /* may have already tried to install something */
-            return (option){
-                NULL,
-                NULL}; // tell previous call we cannot satisfy some dependency
+        d_path* thisPath = &start->dependencies[set];
+        int prev = thisPath->cur;
+        thisPath->cur += 1;
+        if (prev < thisPath->size) {
+          relation tryRel = thisPath->options[prev];
+          if (!isBlocked(block, &tryRel)) {
+            int idx = repo_getPackageIndex(r, &tryRel);
+            if(findCycle(all, idx)) {
+                remove_from_src(&start, start->src);
+                return (option){NULL, NULL};
+            }
+            node *dep = calloc(1, sizeof(*dep));
+            d_path *subdeps = formatDependencies(r, idx);
+            dep->src = start->pkg;
+            dep->rel = tryRel;
+            dep->pkg = idx;
+            dep->numDepends = r->packages[idx]->cDepends;
+            dep->dependencies = subdeps;
+            dep->next = start->next; // insert out package afterward
+            start->next = dep;
+            dep_list *subconflicts = formatConflicts(r, idx);
+            if (subconflicts != NULL)
+              block = dis_append(block, subconflicts);
+            set++; // try next set
           }
-          //->continue
         } else {
-          int idx = repo_getPackageIndex(r, &tryRel);
-          node *dep = calloc(1, sizeof(*dep));
-          d_path *subdeps = formatDependencies(r, idx);
-          dep->src = start->pkg;
-          dep->rel = tryRel;
-          dep->pkg = idx;
-          dep->numDepends = r->packages[idx]->cDepends;
-          dep->dependencies = subdeps;
-          dep->next = start->next; // insert out package afterward
-          start->next = dep;
-          dep_list *subconflicts = formatConflicts(r, idx);
-          if (subconflicts != NULL)
-            block = dis_append(block, subconflicts);
-          set++; // try next set
+          thisPath->cur = 0; //when we get back here we should start again
+          remove_from_src(&start, start->pkg); /* may have already tried to install something */
+          return (option){
+              NULL,
+              NULL}; // tell previous call we cannot satisfy some dependency
         }
       }
     }
-    if (start->next != NULL) {
-      option nxt = resolveDepends(s, r, start->next, block);
-      if (nxt.route == NULL) {
-        // something went wrong, try again
-        if (block != NULL)
-          block->next = NULL; /* unblock things we chose */
-        /* also need to remove the dependencies we added */
-        remove_from_src(start, start->pkg);
-        return resolveDepends(s, r, start, block);
-      }
+    printf("Done with %d\n", start->pkg);
+    option nxt = resolveDepends(s, r, start->next, all, block);
+    if (nxt.route == NULL) {
+      // something went wrong, try again
+      /* also need to remove the dependencies we added */
+      remove_from_src(&start, start->pkg);
+      return resolveDepends(s, r, start, all, block);
     }
+    return nxt;
   }
-  return (option){start, block};
+  return (option){all, block};
 }
 
 option solver_getRoute(const states *s, const repository *repo,
@@ -261,7 +307,7 @@ option solver_getRoute(const states *s, const repository *repo,
     thisCons = thisCons->next;
   }
 
-  return resolveDepends(s, repo, startNode, blocked);
+  return resolveDepends(s, repo, startNode, startNode, blocked);
 }
 
 void remove_duplicates(node** n, int pkg) {
